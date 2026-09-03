@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.8.1 • STABLE APP SHELL"
+APP_VERSION = "PUBLIC V1.9 • PRODUCT LANDING EXPERIENCE"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
@@ -269,35 +269,196 @@ def save_state():
 if not st.user.is_logged_in:
     st.markdown(
         """
-        <div style="
-            max-width:760px;
-            margin:10vh auto 0 auto;
-            padding:2rem;
-            border:1px solid rgba(103,215,255,.22);
-            border-radius:22px;
-            background:rgba(13,19,31,.88);
-        ">
-            <div style="font-size:.78rem;letter-spacing:.16em;color:#67d7ff;font-weight:800;">
-                NEXUS PERSONAL OS
+        <style>
+        [data-testid="stSidebar"] {display:none;}
+        [data-testid="stHeader"] {background:transparent;}
+        .block-container {
+            max-width:1180px;
+            padding-top:2.3rem;
+            padding-bottom:4rem;
+        }
+        .nx-public-nav {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:1rem;
+            margin-bottom:3.5rem;
+        }
+        .nx-public-brand {
+            font-size:1.18rem;
+            font-weight:950;
+            letter-spacing:.18em;
+            color:#f7f9ff;
+        }
+        .nx-public-status {
+            color:#7e8ca7;
+            font-size:.83rem;
+            letter-spacing:.08em;
+            text-transform:uppercase;
+        }
+        .nx-landing-hero {
+            position:relative;
+            overflow:hidden;
+            padding:3.2rem 3rem;
+            border-radius:30px;
+            border:1px solid rgba(103,215,255,.20);
+            background:
+                radial-gradient(circle at 82% 20%, rgba(103,215,255,.14), transparent 32%),
+                radial-gradient(circle at 20% 100%, rgba(185,149,255,.12), transparent 35%),
+                linear-gradient(145deg, rgba(15,22,37,.98), rgba(7,10,17,.98));
+            box-shadow:0 30px 90px rgba(0,0,0,.34);
+        }
+        .nx-landing-kicker {
+            color:#67d7ff;
+            font-size:.77rem;
+            font-weight:900;
+            letter-spacing:.18em;
+            margin-bottom:1rem;
+        }
+        .nx-landing-title {
+            max-width:780px;
+            color:#f7f9ff;
+            font-size:clamp(2.8rem, 7vw, 5.7rem);
+            line-height:.93;
+            letter-spacing:-.055em;
+            font-weight:950;
+            margin-bottom:1.35rem;
+        }
+        .nx-landing-copy {
+            max-width:720px;
+            color:#a0aec6;
+            font-size:1.08rem;
+            line-height:1.7;
+        }
+        .nx-feature-grid {
+            display:grid;
+            grid-template-columns:repeat(3, minmax(0,1fr));
+            gap:1rem;
+            margin:1.2rem 0 1.4rem 0;
+        }
+        .nx-feature {
+            min-height:150px;
+            padding:1.25rem;
+            border-radius:19px;
+            border:1px solid rgba(124,166,255,.14);
+            background:rgba(13,19,31,.76);
+        }
+        .nx-feature-label {
+            color:#f7f9ff;
+            font-weight:900;
+            font-size:1rem;
+            margin-bottom:.55rem;
+        }
+        .nx-feature-copy {
+            color:#8493ad;
+            font-size:.9rem;
+            line-height:1.55;
+        }
+        .nx-login-shell {
+            padding:1.35rem;
+            border:1px solid rgba(103,215,255,.18);
+            border-radius:20px;
+            background:rgba(13,19,31,.76);
+            margin-top:.4rem;
+        }
+        .nx-login-title {
+            color:#f7f9ff;
+            font-size:1.1rem;
+            font-weight:900;
+            margin-bottom:.35rem;
+        }
+        .nx-login-copy {
+            color:#8391aa;
+            font-size:.88rem;
+            line-height:1.5;
+        }
+        .nx-trust {
+            margin-top:1.25rem;
+            text-align:center;
+            color:#68758c;
+            font-size:.78rem;
+        }
+        @media (max-width:800px) {
+            .block-container {padding-top:1rem;}
+            .nx-public-nav {margin-bottom:1.5rem;}
+            .nx-public-status {display:none;}
+            .nx-landing-hero {padding:2rem 1.35rem;border-radius:22px;}
+            .nx-feature-grid {grid-template-columns:1fr;}
+            .nx-feature {min-height:auto;}
+        }
+        </style>
+
+        <div class="nx-public-nav">
+            <div class="nx-public-brand">NEXUS</div>
+            <div class="nx-public-status">PERSONAL OPERATING SYSTEM</div>
+        </div>
+
+        <div class="nx-landing-hero">
+            <div class="nx-landing-kicker">ONE COMMAND CENTER. YOUR WHOLE LIFE.</div>
+            <div class="nx-landing-title">Run your life like a system.</div>
+            <div class="nx-landing-copy">
+                NEXUS brings school, money, fitness, goals, planning, and AI into one
+                personal command center that adapts around what matters to you.
             </div>
-            <div style="font-size:2.35rem;font-weight:900;margin:.35rem 0 .55rem 0;">
-                Your system. Anywhere.
+        </div>
+
+        <div class="nx-feature-grid">
+            <div class="nx-feature">
+                <div class="nx-feature-label">Built around you</div>
+                <div class="nx-feature-copy">
+                    Pick the modules and priorities you care about. Your command center
+                    reshapes itself around your goals.
+                </div>
             </div>
-            <div style="color:#91a0ba;font-size:1.03rem;line-height:1.65;">
-                Sign in with Google to create your private NEXUS profile and sync
-                your school, money, fitness, goals, Intel, and assistant history
-                across devices.
+            <div class="nx-feature">
+                <div class="nx-feature-label">Everything in one place</div>
+                <div class="nx-feature-copy">
+                    Keep assignments, savings, workouts, ideas, and long-term targets
+                    together instead of scattered across different apps.
+                </div>
+            </div>
+            <div class="nx-feature">
+                <div class="nx-feature-label">Cloud synced</div>
+                <div class="nx-feature-copy">
+                    Sign in with Google and your NEXUS profile follows you across your
+                    phone and computer.
+                </div>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.write("")
-    left, center, right = st.columns([1, 1.2, 1])
+
+    left, center, right = st.columns([1.15, 1.7, 1.15])
     with center:
-        if st.button("Continue with Google", type="primary", use_container_width=True):
+        st.markdown(
+            """
+            <div class="nx-login-shell">
+                <div class="nx-login-title">Enter NEXUS</div>
+                <div class="nx-login-copy">
+                    Create your personal system or continue where you left off.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "Continue with Google",
+            type="primary",
+            use_container_width=True,
+            key="public_google_login",
+        ):
             st.login()
-        st.caption("Your Canvas token and personal OpenAI API key are never stored in the NEXUS cloud database.")
+
+    st.markdown(
+        """
+        <div class="nx-trust">
+            Your NEXUS profile is private to your Google account. Canvas and personal
+            OpenAI credentials remain session-only and are not stored in the NEXUS cloud database.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.stop()
 
 
