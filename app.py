@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.4 • POLISHED COMMAND CENTER"
+APP_VERSION = "PUBLIC V1.5 • QUICK ACCESS COMMAND CENTER"
 DEFAULT_TZ = "America/Los_Angeles"
 
 
@@ -996,6 +996,76 @@ st.markdown(
 )
 
 
+
+st.markdown(
+    """
+    <style>
+    /* ---------- V1.5 BALANCE + QUICK ACCESS ---------- */
+
+    .nx-command-wrap {
+        margin-bottom: .25rem;
+    }
+
+    .nx-command-wrap .stButton > button {
+        margin-top: .1rem;
+    }
+
+    .nx-quick-shell {
+        border: 1px solid rgba(126,162,230,.14);
+        border-radius: 17px;
+        background:
+            radial-gradient(circle at 88% 14%, rgba(75,146,255,.08), transparent 28%),
+            linear-gradient(180deg, rgba(14,22,37,.92), rgba(8,14,24,.90));
+        padding: .85rem .9rem .35rem .9rem;
+        margin: .15rem 0 .85rem 0;
+        box-shadow: 0 14px 34px rgba(0,0,0,.12);
+    }
+
+    .nx-quick-label {
+        color:#73819a;
+        font-size:.64rem;
+        font-weight:950;
+        letter-spacing:.15em;
+        margin-bottom:.55rem;
+    }
+
+    .nx-quick-hint {
+        color:#78869e;
+        font-size:.72rem;
+        margin-top:.2rem;
+        margin-bottom:.25rem;
+    }
+
+    .nx-balanced-card {
+        height: 100%;
+    }
+
+    .nx-command-row {
+        align-items: stretch;
+    }
+
+    /* Keep cards/buttons aligned even when only 2 cards are in the row. */
+    div[data-testid="column"] > div:has(.nx-module-card) {
+        height: 100%;
+        display:flex;
+        flex-direction:column;
+    }
+
+    div[data-testid="column"] > div:has(.nx-module-card) > div[data-testid="stVerticalBlock"] {
+        height:100%;
+    }
+
+    @media (max-width: 700px) {
+        .nx-quick-shell {
+            padding: .75rem .75rem .25rem .75rem;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 def page_header(kicker, title, subtitle):
     st.markdown(
         f"""
@@ -1695,6 +1765,18 @@ with st.sidebar:
 
 page = st.session_state.current_page
 
+def quick_access_pages():
+    ordered = dashboard_module_order()
+    return [page for page in ordered if page in PAGES]
+
+
+def balanced_command_rows(snapshots):
+    rows = []
+    for start in range(0, len(snapshots), 3):
+        rows.append(snapshots[start:start + 3])
+    return rows
+
+
 if page == "Dashboard":
     name = data["profile"].get("name", "").strip()
     greeting = f"Welcome back, {name}." if name else "Your personal operating system."
@@ -1710,34 +1792,120 @@ if page == "Dashboard":
     missions = mission_stack()
     snapshots = [dashboard_snapshot(module) for module in modules]
 
+    # --------------------------------------------------------
+    # QUICK ACCESS
+    # --------------------------------------------------------
+    st.markdown(
+        '<div class="mc-section">QUICK ACCESS</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="nx-quick-shell">
+            <div class="nx-quick-label">JUMP TO</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    quick_pages = quick_access_pages()
+    quick_cols = st.columns(5)
+
+    for idx in range(5):
+        with quick_cols[idx]:
+            if idx < len(quick_pages):
+                target = quick_pages[idx]
+                icon = {
+                    "School": "🎓",
+                    "Money": "💰",
+                    "Fitness": "🏋️",
+                    "Intel": "🧠",
+                    "Assistant": "✦",
+                }.get(target, "→")
+
+                if st.button(
+                    f"{icon} {target}",
+                    key=f"quick_{target}",
+                    use_container_width=True,
+                ):
+                    go_to(target)
+            else:
+                st.write("")
+
+    action_cols = st.columns([1, 1, 1, 2])
+
+    with action_cols[0]:
+        if module_enabled("Intel"):
+            if st.button(
+                "＋ Quick Capture",
+                key="quick_capture_jump",
+                use_container_width=True,
+            ):
+                go_to("Intel")
+
+    with action_cols[1]:
+        if module_enabled("School"):
+            if st.button(
+                "＋ Assignment",
+                key="quick_assignment_jump",
+                use_container_width=True,
+            ):
+                go_to("School")
+
+    with action_cols[2]:
+        if module_enabled("Fitness"):
+            if st.button(
+                "＋ Workout",
+                key="quick_workout_jump",
+                use_container_width=True,
+            ):
+                go_to("Fitness")
+
+    with action_cols[3]:
+        st.caption("Fast actions open the right NEXUS module so you can add the item immediately.")
+
+    # --------------------------------------------------------
+    # COMMAND DECK
+    # --------------------------------------------------------
     st.markdown(
         '<div class="mc-section">COMMAND DECK</div>',
         unsafe_allow_html=True,
     )
 
-    # Always keep a balanced 3-column command-center grid.
-    for start in range(0, len(snapshots), 3):
-        row = snapshots[start:start + 3]
-        cols = st.columns(3)
+    rows = balanced_command_rows(snapshots)
 
-        for idx in range(3):
-            with cols[idx]:
-                if idx < len(row):
-                    snap = row[idx]
-                    render_dashboard_snapshot(snap)
+    for row_index, row in enumerate(rows):
+        # If the final row has 2 cards, center them instead of leaving a dead third slot.
+        if len(row) == 2:
+            outer = st.columns([.5, 1, 1, .5])
+            card_columns = [outer[1], outer[2]]
+        elif len(row) == 1:
+            outer = st.columns([1, 1.35, 1])
+            card_columns = [outer[1]]
+        else:
+            card_columns = st.columns(3)
 
-                    if st.button(
-                        f"Open {snap['page']}",
-                        key=f"dash_open_{start}_{snap['page']}",
-                        use_container_width=True,
-                    ):
-                        go_to(snap["page"])
-                else:
-                    st.markdown(
-                        '<div class="nx-grid-spacer"></div>',
-                        unsafe_allow_html=True,
-                    )
+        for idx, snap in enumerate(row):
+            with card_columns[idx]:
+                st.markdown(
+                    '<div class="nx-command-wrap">',
+                    unsafe_allow_html=True,
+                )
 
+                render_dashboard_snapshot(snap)
+
+                if st.button(
+                    f"Open {snap['page']}",
+                    key=f"dash_open_{row_index}_{snap['page']}",
+                    use_container_width=True,
+                ):
+                    go_to(snap["page"])
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
+    # --------------------------------------------------------
+    # NEXUS PULSE
+    # --------------------------------------------------------
     st.markdown(
         '<div class="mc-section">NEXUS PULSE</div>',
         unsafe_allow_html=True,
