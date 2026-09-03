@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.9 • PRODUCT LANDING EXPERIENCE"
+APP_VERSION = "PUBLIC V2.0 • PERSONAL OS FOUNDATION"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
@@ -54,12 +54,28 @@ TIMEZONE_OPTIONS = [
 
 PAGE_ICONS = {
     "Dashboard": "⚡",
+    "Missions": "🎯",
+    "Planner": "📅",
     "School": "🎓",
     "Money": "💰",
     "Fitness": "🏋️",
+    "Vault": "🗂️",
     "Intel": "◈",
+    "Pulse": "◎",
     "Assistant": "✦",
 }
+
+ALL_MODULES = [
+    "Missions",
+    "Planner",
+    "School",
+    "Money",
+    "Fitness",
+    "Vault",
+    "Intel",
+    "Pulse",
+    "Assistant",
+]
 
 
 # ============================================================
@@ -73,10 +89,14 @@ def default_state():
             "system_name": "NEXUS",
             "timezone": DEFAULT_TZ,
             "onboarded": False,
-            "modules": ["School", "Money", "Fitness", "Intel", "Assistant"],
+            "modules": list(ALL_MODULES),
             "primary_goal": "Stay organized",
         },
         "tasks": [],
+        "missions": [],
+        "planner": {"events": []},
+        "vault": {"notes": []},
+        "notifications": [],
         "manual_assignments": [],
         "canvas": {
             "base_url": "",
@@ -509,9 +529,9 @@ PAGES = ["Dashboard"] + [
     module
     for module in data.get("profile", {}).get(
         "modules",
-        ["School", "Money", "Fitness", "Intel", "Assistant"],
+        list(ALL_MODULES),
     )
-    if module in ["School", "Money", "Fitness", "Intel", "Assistant"]
+    if module in ALL_MODULES
 ]
 
 # If this Google account already has a completed cloud profile, skip onboarding.
@@ -574,7 +594,7 @@ def owner_name():
 
 def enabled_modules():
     modules = data.get("profile", {}).get("modules") or []
-    return [m for m in modules if m in ["School", "Money", "Fitness", "Intel", "Assistant"]]
+    return [m for m in modules if m in ALL_MODULES]
 
 
 def module_enabled(name):
@@ -1363,10 +1383,19 @@ def card_grid(cards):
 # ============================================================
 
 def normalize_canvas_url(url):
-    value = (url or "").strip().rstrip("/")
-    if value and not value.startswith("http"):
+    value = (url or "").strip()
+    if not value:
+        return ""
+    if not value.startswith(("http://", "https://")):
         value = "https://" + value
-    return value
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(value)
+        if parsed.netloc:
+            return f"{parsed.scheme or 'https'}://{parsed.netloc}".rstrip("/")
+    except Exception:
+        pass
+    return value.rstrip("/")
 
 
 def canvas_get(path, params=None):
@@ -1536,10 +1565,14 @@ def mission_stack():
     focus = data.get("profile", {}).get("primary_goal", "Stay organized")
 
     focus_module = {
+        "Finish my missions": "Missions",
+        "Plan my time better": "Planner",
         "Do better in school": "School",
         "Save more money": "Money",
         "Get in better shape": "Fitness",
-        "Hit long-term goals": "Intel",
+        "Build my personal knowledge": "Vault",
+        "Stay informed": "Intel",
+        "Hit long-term goals": "Missions",
         "Use AI to stay ahead": "Assistant",
     }.get(focus)
 
@@ -1548,7 +1581,7 @@ def mission_stack():
         mission_type = mission.get("type", "")
         module_type = "Intel" if mission_type == "Task" else mission_type
 
-        if module_type in {"School", "Money", "Fitness", "Intel", "Assistant"}:
+        if module_type in set(ALL_MODULES):
             if module_type not in enabled:
                 continue
 
@@ -1833,11 +1866,11 @@ if not st.session_state.get("nexus_onboarded", False):
         st.markdown("### What do you want NEXUS to manage?")
         default_modules = data["profile"].get(
             "modules",
-            ["School", "Money", "Fitness", "Intel", "Assistant"],
+            list(ALL_MODULES),
         )
         selected_modules = st.multiselect(
             "Choose your modules",
-            ["School", "Money", "Fitness", "Intel", "Assistant"],
+            ALL_MODULES,
             default=default_modules,
             help="Your dashboard and navigation will adapt to these choices.",
         )
@@ -1846,9 +1879,13 @@ if not st.session_state.get("nexus_onboarded", False):
             "What's your main focus right now?",
             [
                 "Stay organized",
+                "Finish my missions",
+                "Plan my time better",
                 "Do better in school",
                 "Save more money",
                 "Get in better shape",
+                "Build my personal knowledge",
+                "Stay informed",
                 "Hit long-term goals",
                 "Use AI to stay ahead",
             ],
@@ -1955,18 +1992,22 @@ with st.sidebar:
         )
         profile_modules = st.multiselect(
             "Active modules",
-            ["School", "Money", "Fitness", "Intel", "Assistant"],
+            ALL_MODULES,
             default=data["profile"].get(
                 "modules",
-                ["School", "Money", "Fitness", "Intel", "Assistant"],
+                list(ALL_MODULES),
             ),
             key="profile_modules",
         )
         goal_options = [
             "Stay organized",
+            "Finish my missions",
+            "Plan my time better",
             "Do better in school",
             "Save more money",
             "Get in better shape",
+            "Build my personal knowledge",
+            "Stay informed",
             "Hit long-term goals",
             "Use AI to stay ahead",
         ]
@@ -2301,6 +2342,190 @@ if page == "Dashboard":
 
 
 # ============================================================
+# MISSIONS
+# ============================================================
+
+elif page == "Missions":
+    page_header("Missions", "MISSIONS // OBJECTIVES", "Turn goals into daily, weekly, and long-term objectives.")
+
+    with st.form("mission_create", clear_on_submit=True):
+        c1, c2, c3 = st.columns([2, 1, 1])
+        with c1:
+            mission_name = st.text_input("Mission")
+        with c2:
+            mission_priority = st.selectbox("Priority", ["High", "Medium", "Low"], index=1)
+        with c3:
+            mission_due = st.date_input("Target date", value=now_local().date())
+        mission_detail = st.text_input("Next step", placeholder="Optional")
+        if st.form_submit_button("Add mission", use_container_width=True):
+            if mission_name.strip():
+                data.setdefault("missions", []).append({
+                    "id": f"mission-{datetime.now().timestamp()}",
+                    "name": mission_name.strip(),
+                    "detail": mission_detail.strip(),
+                    "priority": mission_priority,
+                    "due": mission_due.isoformat(),
+                    "done": False,
+                })
+                save_state()
+                st.rerun()
+
+    active_missions = [m for m in data.get("missions", []) if not m.get("done")]
+    st.markdown('<div class="mc-section">ACTIVE MISSIONS</div>', unsafe_allow_html=True)
+    if not active_missions:
+        st.info("No active missions yet.")
+    else:
+        rank = {"High": 0, "Medium": 1, "Low": 2}
+        for mission in sorted(active_missions, key=lambda m: (rank.get(m.get("priority"), 1), m.get("due", ""))):
+            c1, c2 = st.columns([5, 1])
+            with c1:
+                st.markdown(
+                    f"""<div class="mc-task"><div class="mc-task-title">{mission.get('name','Mission')}</div>
+                    <div class="mc-task-meta">{mission.get('priority','Medium')} priority • Target {mission.get('due','')} • {mission.get('detail') or 'No next step added'}</div></div>""",
+                    unsafe_allow_html=True,
+                )
+            with c2:
+                if st.button("Complete", key=f"finish_{mission['id']}", use_container_width=True):
+                    mission["done"] = True
+                    save_state()
+                    st.rerun()
+
+
+# ============================================================
+# PLANNER
+# ============================================================
+
+elif page == "Planner":
+    page_header("Planner", "PLANNER // TIME", "Keep classes, work, exams, appointments, and time blocks in one schedule.")
+
+    with st.form("planner_event", clear_on_submit=True):
+        c1, c2 = st.columns([1.6, 1])
+        with c1:
+            event_name = st.text_input("Event")
+            event_type = st.selectbox("Type", ["Personal", "Class", "Work", "Exam", "Workout", "Deadline", "Other"])
+        with c2:
+            event_date = st.date_input("Date", value=now_local().date())
+            event_time = st.time_input("Time", value=now_local().replace(second=0, microsecond=0).time())
+        if st.form_submit_button("Add to Planner", use_container_width=True):
+            if event_name.strip():
+                data.setdefault("planner", {}).setdefault("events", []).append({
+                    "id": f"event-{datetime.now().timestamp()}",
+                    "name": event_name.strip(),
+                    "type": event_type,
+                    "date": event_date.isoformat(),
+                    "time": event_time.strftime("%H:%M"),
+                })
+                save_state()
+                st.rerun()
+
+    events = sorted(data.setdefault("planner", {}).setdefault("events", []), key=lambda e: (e.get("date", ""), e.get("time", "")))
+    future_events = [e for e in events if e.get("date", "") >= now_local().date().isoformat()]
+    st.markdown('<div class="mc-section">UPCOMING</div>', unsafe_allow_html=True)
+    if not future_events:
+        st.info("Your planner is clear.")
+    else:
+        for event in future_events[:40]:
+            st.markdown(
+                f"""<div class="mc-task"><div class="mc-task-title">{event.get('name','Event')}</div>
+                <div class="mc-task-meta">{event.get('type','Personal')} • {event.get('date','')} • {event.get('time','')}</div></div>""",
+                unsafe_allow_html=True,
+            )
+    st.caption("Calendar integrations come next; this establishes the shared NEXUS schedule first.")
+
+
+# ============================================================
+# VAULT
+# ============================================================
+
+elif page == "Vault":
+    page_header("Vault", "VAULT // MEMORY", "Capture notes, ideas, links, lists, and information you want NEXUS to remember.")
+
+    with st.form("vault_capture", clear_on_submit=True):
+        note_title = st.text_input("Title")
+        note_body = st.text_area("Capture", height=150)
+        note_tag = st.text_input("Tag", placeholder="school, business, idea...")
+        if st.form_submit_button("Save to Vault", use_container_width=True):
+            if note_title.strip() or note_body.strip():
+                data.setdefault("vault", {}).setdefault("notes", []).append({
+                    "id": f"note-{datetime.now().timestamp()}",
+                    "title": note_title.strip() or "Untitled",
+                    "body": note_body.strip(),
+                    "tag": note_tag.strip(),
+                    "created": now_local().isoformat(),
+                })
+                save_state()
+                st.rerun()
+
+    notes = data.setdefault("vault", {}).setdefault("notes", [])
+    search_vault = st.text_input("Search your Vault")
+    query = search_vault.strip().lower()
+    shown = [n for n in reversed(notes) if not query or query in f"{n.get('title','')} {n.get('body','')} {n.get('tag','')}".lower()]
+    st.markdown('<div class="mc-section">SAVED MEMORY</div>', unsafe_allow_html=True)
+    if not shown:
+        st.info("Nothing in your Vault yet.")
+    else:
+        for note in shown[:50]:
+            tag = f" • #{note.get('tag')}" if note.get("tag") else ""
+            with st.expander(f"{note.get('title','Untitled')}{tag}"):
+                st.write(note.get("body") or "No additional text.")
+
+
+# ============================================================
+# PULSE
+# ============================================================
+
+elif page == "Pulse":
+    page_header("NEXUS Pulse", "PULSE // SYSTEM HEALTH", "See what is going well and what needs your attention.")
+
+    open_missions = len([m for m in data.get("missions", []) if not m.get("done")])
+    school_open = len([x for x in combined_assignments() if not x.get("submitted")])
+
+    workouts_7 = 0
+    cutoff = now_local().date() - timedelta(days=7)
+    for workout in data.get("fitness", {}).get("workouts", []):
+        try:
+            if date.fromisoformat(workout.get("date", "")) >= cutoff:
+                workouts_7 += 1
+        except Exception:
+            pass
+
+    savings = safe_float(data.get("money", {}).get("savings"))
+    savings_goal = max(1.0, safe_float(data.get("money", {}).get("goal"), 1.0))
+    savings_pct = max(0, min(100, int((savings / savings_goal) * 100)))
+
+    school_score = max(35, min(100, 100 - min(school_open, 10) * 5))
+    mission_score = max(40, min(100, 100 - min(open_missions, 10) * 4))
+    fitness_score = max(35, min(100, 40 + workouts_7 * 15))
+    money_score = max(35, min(100, 40 + int(savings_pct * .6)))
+    pulse_score = round((school_score + mission_score + fitness_score + money_score) / 4)
+
+    st.metric("NEXUS PULSE", f"{pulse_score}/100")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("School", school_score)
+    c2.metric("Missions", mission_score)
+    c3.metric("Fitness", fitness_score)
+    c4.metric("Money", money_score)
+
+    st.markdown('<div class="mc-section">NEEDS ATTENTION</div>', unsafe_allow_html=True)
+    attention = []
+    if school_open:
+        attention.append(f"{school_open} school item(s) are still open.")
+    if open_missions:
+        attention.append(f"{open_missions} active mission(s) need progress.")
+    if workouts_7 < 2:
+        attention.append("Training activity is low this week.")
+    if savings_pct < 25:
+        attention.append("Savings goal is still in the early stage.")
+    if not attention:
+        st.success("No major weak spots detected from the data currently in NEXUS.")
+    else:
+        for item in attention:
+            st.markdown(f"- {item}")
+
+    st.caption("Pulse becomes smarter as NEXUS gets more integrations and history.")
+
+
+# ============================================================
 # SCHOOL
 # ============================================================
 
@@ -2314,45 +2539,91 @@ elif page == "School":
     tab1, tab2 = st.tabs(["Canvas", "Manual planner"])
 
     with tab1:
-        st.warning(
-            "Public-safe mode: your Canvas URL/token live only in this Streamlit session. "
-            "They are not written to a file by this app."
+        st.markdown(
+            """
+            <div class="nx-pulse">
+                <div class="mc-section" style="margin-top:0;">QUICK CONNECT</div>
+                <div class="nx-pulse-copy">
+                    Paste any page from your school's Canvas site — NEXUS will automatically
+                    reduce it to the correct Canvas address. Then paste one access token.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        c1, c2 = st.columns([1.1, 1])
-        with c1:
-            data["canvas"]["base_url"] = st.text_input(
-                "Canvas URL",
-                value=data["canvas"].get("base_url", ""),
-                placeholder="https://school.instructure.com",
+        canvas_url_input = st.text_input(
+            "1. Paste your Canvas website",
+            value=data["canvas"].get("base_url", ""),
+            placeholder="Example: https://myschool.instructure.com/courses/123",
+            help="You can paste the Canvas homepage, a course page, or another Canvas page.",
+        )
+        data["canvas"]["base_url"] = normalize_canvas_url(canvas_url_input)
+
+        if data["canvas"]["base_url"]:
+            st.caption(f"NEXUS will connect to: {data['canvas']['base_url']}")
+            settings_url = data["canvas"]["base_url"].rstrip("/") + "/profile/settings"
+            st.link_button(
+                "2. Open Canvas settings to create a token ↗",
+                settings_url,
+                use_container_width=True,
             )
-        with c2:
-            data["canvas"]["token"] = st.text_input(
-                "Canvas access token",
-                value=data["canvas"].get("token", ""),
-                type="password",
+        else:
+            st.caption("Paste your Canvas URL first and NEXUS will generate the settings link.")
+
+        with st.expander("How do I make the Canvas token?"):
+            st.markdown(
+                """
+                1. Open the Canvas settings button above.
+                2. Scroll to **Approved Integrations**.
+                3. Choose **New Access Token**.
+                4. Give it a name like **NEXUS** and create it.
+                5. Copy the token Canvas shows you and paste it below.
+
+                Canvas normally shows the full token only when it is created, so copy it before leaving that screen.
+                """
             )
 
-        b1, b2 = st.columns(2)
+        data["canvas"]["token"] = st.text_input(
+            "3. Paste your Canvas access token",
+            value=data["canvas"].get("token", ""),
+            type="password",
+            placeholder="Paste token here",
+        )
+
+        st.caption(
+            "Security: the token stays session-only. NEXUS remembers your Canvas website, "
+            "but removes the access token before saving your profile to the cloud."
+        )
+
+        b1, b2 = st.columns([1.4, 1])
         with b1:
-            if st.button("Connect + sync", use_container_width=True):
-                try:
-                    with st.spinner("Syncing Canvas..."):
-                        assignments = fetch_canvas_assignments()
-                    data["canvas"]["assignments"] = assignments
-                    data["canvas"]["connected"] = True
-                    data["canvas"]["error"] = None
-                    data["canvas"]["last_sync"] = now_local().isoformat()
-                    save_state()
-                    st.success(f"Connected. Loaded {len(assignments)} upcoming assignments.")
-                except Exception as exc:
-                    data["canvas"]["connected"] = False
-                    data["canvas"]["error"] = str(exc)
-                    st.error(str(exc))
+            if st.button("Connect Canvas", type="primary", use_container_width=True):
+                if not data["canvas"].get("base_url") or not data["canvas"].get("token"):
+                    st.warning("Add both your Canvas website and access token first.")
+                else:
+                    try:
+                        with st.spinner("Connecting and importing your classes..."):
+                            assignments = fetch_canvas_assignments()
+                        data["canvas"]["assignments"] = assignments
+                        data["canvas"]["connected"] = True
+                        data["canvas"]["error"] = None
+                        data["canvas"]["last_sync"] = now_local().isoformat()
+                        save_state()
+                        st.success(f"Canvas connected — {len(assignments)} upcoming assignments imported.")
+                    except Exception as exc:
+                        data["canvas"]["connected"] = False
+                        data["canvas"]["error"] = str(exc)
+                        st.error(
+                            "NEXUS couldn't connect. Double-check the Canvas site and token. "
+                            f"Details: {exc}"
+                        )
 
         with b2:
-            if st.button("Disconnect Canvas", use_container_width=True):
+            if st.button("Disconnect", use_container_width=True):
+                remembered_url = data["canvas"].get("base_url", "")
                 data["canvas"] = default_state()["canvas"]
+                data["canvas"]["base_url"] = remembered_url
                 save_state()
                 st.rerun()
 
