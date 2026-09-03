@@ -13,7 +13,7 @@ import streamlit as st
 # ============================================================
 
 st.set_page_config(
-    page_title="MAX // CONTROL — Public",
+    page_title="NEXUS — Personal OS",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -49,6 +49,7 @@ def default_state():
     return {
         "profile": {
             "name": "",
+            "system_name": "NEXUS",
             "timezone": DEFAULT_TZ,
         },
         "tasks": [],
@@ -118,6 +119,15 @@ def safe_float(value, default=0.0):
         return float(value)
     except Exception:
         return default
+
+
+def system_name():
+    value = (data.get("profile", {}).get("system_name") or "NEXUS").strip()
+    return value or "NEXUS"
+
+
+def owner_name():
+    return (data.get("profile", {}).get("name") or "").strip()
 
 
 # ============================================================
@@ -627,12 +637,68 @@ def context_snapshot():
 
 
 # ============================================================
+# FIRST-RUN ONBOARDING
+# ============================================================
+
+if not st.session_state.get("nexus_onboarded", False):
+    st.markdown(
+        """
+        <div class="mc-hero">
+            <div class="mc-kicker">WELCOME</div>
+            <div class="mc-title">Build your system.</div>
+            <div class="mc-subtitle">
+                NEXUS is the public version of the personal operating system.
+                Make it yours before you enter.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.form("nexus_onboarding"):
+        onboard_name = st.text_input(
+            "What's your name?",
+            value=data["profile"].get("name", ""),
+            placeholder="Alex",
+        )
+        onboard_system = st.text_input(
+            "What should your system be called?",
+            value=data["profile"].get("system_name", "NEXUS"),
+            placeholder="NEXUS",
+            help="Examples: NEXUS, ORBIT, CORE, APEX",
+        )
+        onboard_tz = st.text_input(
+            "Timezone",
+            value=data["profile"].get("timezone", DEFAULT_TZ),
+            help="Example: America/Los_Angeles",
+        )
+
+        submitted = st.form_submit_button(
+            "ENTER MY SYSTEM",
+            use_container_width=True,
+        )
+
+        if submitted:
+            data["profile"]["name"] = onboard_name.strip()
+            data["profile"]["system_name"] = onboard_system.strip() or "NEXUS"
+            data["profile"]["timezone"] = onboard_tz.strip() or DEFAULT_TZ
+            save_state()
+            st.session_state.nexus_onboarded = True
+            st.rerun()
+
+    st.stop()
+
+
+# ============================================================
 # SIDEBAR
 # ============================================================
 
 with st.sidebar:
-    st.markdown('<div class="mc-brand">MAX // CONTROL</div>', unsafe_allow_html=True)
-    st.caption("Public build • no device controls")
+    st.markdown(
+        f'<div class="mc-brand">{system_name()}</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Public build • personal operating system")
 
     for nav_page in PAGES:
         label = f"{PAGE_ICONS[nav_page]}  {nav_page}"
@@ -658,9 +724,16 @@ with st.sidebar:
 
     with st.expander("👤 Session profile"):
         data["profile"]["name"] = st.text_input(
-            "Name",
+            "Your name",
             value=data["profile"].get("name", ""),
             key="profile_name",
+        )
+        data["profile"]["system_name"] = st.text_input(
+            "Name your system",
+            value=data["profile"].get("system_name", "NEXUS"),
+            placeholder="NEXUS",
+            help="Examples: NEXUS, ORBIT, CORE, APEX",
+            key="profile_system_name",
         )
         data["profile"]["timezone"] = st.text_input(
             "Timezone",
@@ -706,12 +779,12 @@ page = st.session_state.current_page
 
 if page == "Dashboard":
     name = data["profile"].get("name", "").strip()
-    greeting = f"Welcome back, {name}." if name else "Your command center."
+    greeting = f"Welcome back, {name}." if name else "Your personal operating system."
 
     page_header(
         "Personal Operating System",
-        "MAX // CONTROL",
-        f"{greeting} Public-safe build with school, money, fitness, intel, and AI — no computer controls.",
+        system_name(),
+        f"{greeting} School, money, fitness, intel, and AI in one personal command center.",
     )
 
     school_items = active_school_items()
@@ -739,7 +812,7 @@ if page == "Dashboard":
     ]
     card_grid(cards)
 
-    st.markdown('<div class="mc-section">✦ MAX PULSE</div>', unsafe_allow_html=True)
+    st.markdown('<div class="mc-section">✦ NEXUS PULSE</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="mc-note">{local_brief()}</div>', unsafe_allow_html=True)
 
     col1, col2 = st.columns([1.15, 0.85])
@@ -1111,7 +1184,7 @@ elif page == "Fitness":
 elif page == "Intel":
     page_header(
         "Personal Radar",
-        "MAX // INTEL",
+        f"{system_name()} // INTEL",
         "One place for priorities, future dates, quick capture, and the information you actually need to act on.",
     )
 
@@ -1243,8 +1316,8 @@ elif page == "Intel":
 elif page == "Assistant":
     page_header(
         "Intelligence",
-        "ASK // MAX",
-        "A contextual assistant for the public build. It can use your session data locally, or your own OpenAI API key if you choose.",
+        f"ASK // {system_name()}",
+        "A contextual assistant for your personal system. It can use your session data locally, or your own OpenAI API key if you choose.",
     )
 
     with st.expander("Optional OpenAI connection"):
@@ -1273,7 +1346,7 @@ elif page == "Assistant":
         with st.chat_message(msg.get("role", "assistant")):
             st.markdown(msg.get("content", ""))
 
-    prompt = st.chat_input("Ask MAX what matters right now...")
+    prompt = st.chat_input(f"Ask {system_name()} what matters right now...")
 
     if prompt:
         history.append({"role": "user", "content": prompt})
@@ -1284,7 +1357,7 @@ elif page == "Assistant":
         with st.chat_message("assistant"):
             if data["openai"].get("api_key"):
                 system = (
-                    "You are MAX, a concise personal operations assistant inside a public Streamlit app. "
+                    f"You are {system_name()}, a concise personal operations assistant inside a public Streamlit app. "
                     "Use the supplied context to help the user prioritize school, money, fitness, goals, and tasks. "
                     "Do not claim access to devices, private accounts, or controls. "
                     "Be practical and concise."
@@ -1345,6 +1418,6 @@ elif page == "Assistant":
 
 st.divider()
 st.caption(
-    "MAX // CONTROL Public • No Mac/PC control endpoints, no shared data.json, "
+    f"{system_name()} • NEXUS Public Build • No Mac/PC control endpoints, no shared data.json, "
     "no owner Canvas token, and no owner OpenAI key are included in this build."
 )
