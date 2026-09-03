@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.5 • QUICK ACCESS COMMAND CENTER"
+APP_VERSION = "PUBLIC V1.6 • BALANCED COMMAND CENTER"
 DEFAULT_TZ = "America/Los_Angeles"
 
 
@@ -1058,6 +1058,61 @@ st.markdown(
     @media (max-width: 700px) {
         .nx-quick-shell {
             padding: .75rem .75rem .25rem .75rem;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+
+st.markdown(
+    """
+    <style>
+    /* ---------- V1.6 EQUAL CARD HEIGHTS ---------- */
+
+    .nx-module-card {
+        height: 156px;
+        min-height: 156px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+
+    .nx-module-card .nx-money-wrap {
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    .nx-command-wrap {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .nx-command-wrap .nx-module-card {
+        flex: 0 0 156px;
+    }
+
+    .nx-command-wrap .stButton {
+        margin-top: .15rem;
+    }
+
+    .nx-command-wrap .stButton > button {
+        min-height: 44px;
+    }
+
+    @media (max-width: 700px) {
+        .nx-module-card {
+            height: 146px;
+            min-height: 146px;
+        }
+
+        .nx-command-wrap .nx-module-card {
+            flex-basis: 146px;
         }
     }
     </style>
