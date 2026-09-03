@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.3 • ADAPTIVE COMMAND CENTER"
+APP_VERSION = "PUBLIC V1.4 • POLISHED COMMAND CENTER"
 DEFAULT_TZ = "America/Los_Angeles"
 
 
@@ -773,6 +773,229 @@ st.markdown(
 )
 
 
+
+st.markdown(
+    """
+    <style>
+    /* ---------- V1.4 POLISH PASS ---------- */
+
+    .block-container {
+        max-width: 1180px;
+        padding-top: .8rem;
+    }
+
+    .mc-hero {
+        padding: 1rem 1.2rem 1.05rem 1.2rem;
+        border-radius: 18px;
+        min-height: auto;
+    }
+
+    .mc-title {
+        font-size: clamp(2rem, 4.8vw, 3.35rem);
+        letter-spacing: -.045em;
+    }
+
+    .mc-subtitle {
+        margin-top: .48rem;
+        font-size: .95rem;
+        line-height: 1.5;
+    }
+
+    .mc-section {
+        margin-top: 1.2rem;
+        margin-bottom: .38rem;
+        color: #dfe8ff;
+    }
+
+    .nx-module-card {
+        min-height: 126px;
+        padding: .88rem .95rem;
+        border-radius: 16px;
+        transition:
+            transform .18s ease,
+            border-color .18s ease,
+            box-shadow .18s ease;
+    }
+
+    .nx-module-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(126,162,230,.28);
+        box-shadow:
+            0 18px 44px rgba(0,0,0,.18),
+            0 0 32px rgba(68,139,255,.045);
+    }
+
+    .nx-big {
+        font-size: 1.82rem;
+        margin-top: .28rem;
+    }
+
+    .nx-label {
+        font-size: .84rem;
+    }
+
+    .nx-detail {
+        font-size: .73rem;
+    }
+
+    .stButton > button {
+        min-height: 42px;
+        border-radius: 12px;
+        background:
+            linear-gradient(180deg, rgba(16,25,42,.96), rgba(11,18,31,.96));
+    }
+
+    .nx-grid-spacer {
+        min-height: 1px;
+    }
+
+    .nx-pulse {
+        position: relative;
+        overflow: hidden;
+        border-radius: 17px;
+        border: 1px solid rgba(58,217,255,.16);
+        background:
+            radial-gradient(circle at 92% 12%, rgba(169,120,255,.13), transparent 30%),
+            linear-gradient(135deg, rgba(12,20,34,.96), rgba(8,14,24,.93));
+        padding: .95rem 1rem;
+        box-shadow: 0 14px 34px rgba(0,0,0,.14);
+        margin-bottom: .75rem;
+    }
+
+    .nx-pulse::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, #3ad9ff, #a978ff, #ff65c8);
+    }
+
+    .nx-pulse-kicker {
+        color: #58ddff;
+        font-size: .66rem;
+        font-weight: 950;
+        letter-spacing: .16em;
+        margin-bottom: .38rem;
+    }
+
+    .nx-pulse-copy {
+        color: #e7eefc;
+        font-size: .93rem;
+        line-height: 1.55;
+    }
+
+    .nx-money-wrap {
+        display:flex;
+        align-items:center;
+        gap:.9rem;
+    }
+
+    .nx-ring {
+        --pct: 0;
+        --ring-color: #42db82;
+        width: 66px;
+        height: 66px;
+        min-width: 66px;
+        border-radius: 50%;
+        display:grid;
+        place-items:center;
+        background:
+            conic-gradient(
+                var(--ring-color) calc(var(--pct) * 1%),
+                rgba(255,255,255,.07) 0
+            );
+        position:relative;
+        box-shadow: 0 0 28px rgba(66,219,130,.09);
+    }
+
+    .nx-ring::after {
+        content:"";
+        position:absolute;
+        width:50px;
+        height:50px;
+        border-radius:50%;
+        background:#0a111d;
+        border:1px solid rgba(255,255,255,.04);
+    }
+
+    .nx-ring-value {
+        position:relative;
+        z-index:1;
+        color:#f8fbff;
+        font-size:.82rem;
+        font-weight:950;
+    }
+
+    .mc-task,
+    .mc-radar {
+        border-radius: 14px;
+        padding: .78rem .9rem;
+        margin-bottom: .48rem;
+    }
+
+    .mc-task-title {
+        font-size: .89rem;
+        line-height: 1.32;
+    }
+
+    .mc-task-meta {
+        font-size: .72rem;
+        margin-top: .18rem;
+    }
+
+    .nx-panel-title {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:.7rem;
+        margin-bottom:.4rem;
+    }
+
+    .nx-panel-badge {
+        font-size:.62rem;
+        letter-spacing:.12em;
+        font-weight:900;
+        color:#91a0b7;
+        border:1px solid rgba(126,162,230,.15);
+        border-radius:999px;
+        padding:.2rem .45rem;
+        background:rgba(10,16,28,.62);
+    }
+
+    [data-testid="stSidebar"] .stButton > button {
+        min-height: 38px;
+    }
+
+    @media (max-width: 700px) {
+        .block-container {
+            padding-left: .85rem;
+            padding-right: .85rem;
+        }
+
+        .mc-hero {
+            padding: .92rem .95rem 1rem .95rem;
+        }
+
+        .mc-title {
+            font-size: 2.2rem;
+        }
+
+        .nx-module-card {
+            min-height: 116px;
+        }
+
+        .nx-pulse {
+            padding: .85rem .9rem;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 def page_header(kicker, title, subtitle):
     st.markdown(
         f"""
@@ -1123,6 +1346,45 @@ def dashboard_module_order():
     return [module for module in preferred if module in enabled]
 
 
+def render_dashboard_snapshot(snap):
+    if snap["page"] == "Money":
+        try:
+            pct = int(str(snap["value"]).replace("%", ""))
+        except Exception:
+            pct = 0
+        pct = max(0, min(100, pct))
+
+        st.markdown(
+            f"""
+            <div class="nx-module-card green">
+                <div class="nx-money-wrap">
+                    <div class="nx-ring" style="--pct:{pct};">
+                        <div class="nx-ring-value">{pct}%</div>
+                    </div>
+                    <div>
+                        <div class="nx-eye">{snap['eyebrow']}</div>
+                        <div class="nx-label">{snap['label']}</div>
+                        <div class="nx-detail">{snap['detail']}</div>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f"""
+            <div class="nx-module-card {snap['color']}">
+                <div class="nx-eye">{snap['eyebrow']}</div>
+                <div class="nx-big">{snap['value']}</div>
+                <div class="nx-label">{snap['label']}</div>
+                <div class="nx-detail">{snap['detail']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
 def dashboard_snapshot(module):
     if module == "School":
         items = active_school_items()
@@ -1446,53 +1708,60 @@ if page == "Dashboard":
 
     modules = dashboard_module_order()
     missions = mission_stack()
+    snapshots = [dashboard_snapshot(module) for module in modules]
 
     st.markdown(
         '<div class="mc-section">COMMAND DECK</div>',
         unsafe_allow_html=True,
     )
 
-    snapshots = [dashboard_snapshot(module) for module in modules]
-
+    # Always keep a balanced 3-column command-center grid.
     for start in range(0, len(snapshots), 3):
         row = snapshots[start:start + 3]
-        cols = st.columns(len(row))
+        cols = st.columns(3)
 
-        for idx, snap in enumerate(row):
+        for idx in range(3):
             with cols[idx]:
-                st.markdown(
-                    f"""
-                    <div class="nx-module-card {snap['color']}">
-                        <div class="nx-eye">{snap['eyebrow']}</div>
-                        <div class="nx-big">{snap['value']}</div>
-                        <div class="nx-label">{snap['label']}</div>
-                        <div class="nx-detail">{snap['detail']}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                if idx < len(row):
+                    snap = row[idx]
+                    render_dashboard_snapshot(snap)
 
-                if st.button(
-                    f"Open {snap['page']}",
-                    key=f"dash_open_{start}_{snap['page']}",
-                    use_container_width=True,
-                ):
-                    go_to(snap["page"])
+                    if st.button(
+                        f"Open {snap['page']}",
+                        key=f"dash_open_{start}_{snap['page']}",
+                        use_container_width=True,
+                    ):
+                        go_to(snap["page"])
+                else:
+                    st.markdown(
+                        '<div class="nx-grid-spacer"></div>',
+                        unsafe_allow_html=True,
+                    )
 
     st.markdown(
         '<div class="mc-section">NEXUS PULSE</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
-        f'<div class="mc-note">{local_brief()}</div>',
+        f"""
+        <div class="nx-pulse">
+            <div class="nx-pulse-kicker">LIVE READOUT</div>
+            <div class="nx-pulse-copy">{local_brief()}</div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
-    left, right = st.columns([1.18, .82])
+    left, right = st.columns([1.12, .88])
 
     with left:
         st.markdown(
-            '<div class="mc-section">MISSION STACK</div>',
+            """
+            <div class="nx-panel-title">
+                <div class="mc-section" style="margin-top:0;">MISSION STACK</div>
+                <div class="nx-panel-badge">PRIORITY QUEUE</div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
 
@@ -1521,7 +1790,12 @@ if page == "Dashboard":
     with right:
         if module_enabled("Intel"):
             st.markdown(
-                '<div class="mc-section">FUTURE RADAR</div>',
+                """
+                <div class="nx-panel-title">
+                    <div class="mc-section" style="margin-top:0;">FUTURE RADAR</div>
+                    <div class="nx-panel-badge">AHEAD</div>
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
 
@@ -1552,11 +1826,16 @@ if page == "Dashboard":
                     )
         else:
             st.markdown(
-                '<div class="mc-section">CURRENT FOCUS</div>',
+                """
+                <div class="nx-panel-title">
+                    <div class="mc-section" style="margin-top:0;">CURRENT FOCUS</div>
+                    <div class="nx-panel-badge">NOW</div>
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f'<div class="mc-note">{focus}</div>',
+                f'<div class="nx-pulse"><div class="nx-pulse-copy">{focus}</div></div>',
                 unsafe_allow_html=True,
             )
 
@@ -2115,6 +2394,6 @@ elif page == "Assistant":
 
 st.divider()
 st.caption(
-    f"{system_name()} • NEXUS Adaptive Command Center • Google login + private Neon persistence • "
+    f"{system_name()} • NEXUS Polished Command Center • Google login + private Neon persistence • "
     "no owner Canvas token, and no owner OpenAI key are included in this build."
 )
