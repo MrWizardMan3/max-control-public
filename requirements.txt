@@ -1,2 +1,3 @@
-streamlit>=1.40
+streamlit[auth]>=1.42
 requests>=2.31
+psycopg2-binary>=2.9.9

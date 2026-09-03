@@ -1,9 +1,11 @@
 
+import copy
 import json
 import math
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+import psycopg2
 import requests
 import streamlit as st
 
@@ -19,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.0"
+APP_VERSION = "PUBLIC V1.1 • CLOUD ACCOUNTS"
 DEFAULT_TZ = "America/Los_Angeles"
 
 PAGES = [
@@ -51,6 +53,7 @@ def default_state():
             "name": "",
             "system_name": "NEXUS",
             "timezone": DEFAULT_TZ,
+            "onboarded": False,
         },
         "tasks": [],
         "manual_assignments": [],
@@ -86,6 +89,231 @@ def default_state():
     }
 
 
+# ============================================================
+# AUTH + CLOUD PERSISTENCE
+# ============================================================
+
+def database_url():
+    try:
+        return str(st.secrets["DATABASE_URL"]).strip()
+    except Exception:
+        return ""
+
+
+def user_claim(name, default=""):
+    try:
+        value = st.user.get(name, default)
+    except Exception:
+        value = default
+    return value or default
+
+
+def user_id():
+    # Google's OIDC "sub" claim is stable for the user within this client.
+    return str(user_claim("sub", "")).strip()
+
+
+def user_email():
+    return str(user_claim("email", "")).strip()
+
+
+def user_display_name():
+    return str(user_claim("name", "")).strip()
+
+
+def sanitized_state_for_cloud(state):
+    """
+    Persist the user's NEXUS data while intentionally excluding credentials
+    that should remain session-only.
+    """
+    safe = copy.deepcopy(state)
+
+    safe.setdefault("canvas", {})
+    safe["canvas"]["token"] = ""
+    safe["canvas"]["connected"] = False
+    safe["canvas"]["error"] = None
+
+    safe.setdefault("openai", {})
+    safe["openai"]["api_key"] = ""
+
+    return safe
+
+
+def merge_with_defaults(saved):
+    base = default_state()
+    if not isinstance(saved, dict):
+        return base
+
+    # Top-level merge, then merge nested dictionaries used by the app.
+    for key, value in saved.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            base[key].update(value)
+        else:
+            base[key] = value
+
+    # Backward compatibility for users created before cloud accounts.
+    profile = base.setdefault("profile", {})
+    if "onboarded" not in profile:
+        profile["onboarded"] = bool(profile.get("name"))
+    return base
+
+
+def init_database():
+    url = database_url()
+    if not url:
+        raise RuntimeError("DATABASE_URL is missing from Streamlit Secrets.")
+
+    with psycopg2.connect(url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS nexus_user_data (
+                    user_id TEXT PRIMARY KEY,
+                    email TEXT,
+                    display_name TEXT,
+                    app_data JSONB NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                """
+            )
+        conn.commit()
+
+
+def load_cloud_state(uid):
+    url = database_url()
+    with psycopg2.connect(url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT app_data FROM nexus_user_data WHERE user_id = %s;",
+                (uid,),
+            )
+            row = cur.fetchone()
+
+    if not row:
+        return default_state(), False
+
+    payload = row[0]
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    return merge_with_defaults(payload), True
+
+
+def persist_cloud_state(state):
+    uid = user_id()
+    if not uid:
+        return
+
+    safe = sanitized_state_for_cloud(state)
+    payload = json.dumps(safe, default=str)
+
+    with psycopg2.connect(database_url()) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO nexus_user_data
+                    (user_id, email, display_name, app_data, updated_at)
+                VALUES
+                    (%s, %s, %s, %s::jsonb, NOW())
+                ON CONFLICT (user_id)
+                DO UPDATE SET
+                    email = EXCLUDED.email,
+                    display_name = EXCLUDED.display_name,
+                    app_data = EXCLUDED.app_data,
+                    updated_at = NOW();
+                """,
+                (
+                    uid,
+                    user_email(),
+                    user_display_name(),
+                    payload,
+                ),
+            )
+        conn.commit()
+
+
+def save_state():
+    st.session_state.public_data = data
+    try:
+        persist_cloud_state(data)
+        st.session_state["cloud_save_error"] = None
+    except Exception:
+        # Never print the connection string or database credentials.
+        st.session_state["cloud_save_error"] = (
+            "NEXUS could not save to the cloud right now."
+        )
+
+
+# Require a Google account before loading any private user data.
+if not st.user.is_logged_in:
+    st.markdown(
+        """
+        <div style="
+            max-width:760px;
+            margin:10vh auto 0 auto;
+            padding:2rem;
+            border:1px solid rgba(103,215,255,.22);
+            border-radius:22px;
+            background:rgba(13,19,31,.88);
+        ">
+            <div style="font-size:.78rem;letter-spacing:.16em;color:#67d7ff;font-weight:800;">
+                NEXUS PERSONAL OS
+            </div>
+            <div style="font-size:2.35rem;font-weight:900;margin:.35rem 0 .55rem 0;">
+                Your system. Anywhere.
+            </div>
+            <div style="color:#91a0ba;font-size:1.03rem;line-height:1.65;">
+                Sign in with Google to create your private NEXUS profile and sync
+                your school, money, fitness, goals, Intel, and assistant history
+                across devices.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write("")
+    left, center, right = st.columns([1, 1.2, 1])
+    with center:
+        if st.button("Continue with Google", type="primary", use_container_width=True):
+            st.login()
+        st.caption("Your Canvas token and personal OpenAI API key are never stored in the NEXUS cloud database.")
+    st.stop()
+
+
+uid = user_id()
+if not uid:
+    st.error("Google sign-in succeeded, but NEXUS did not receive a usable user ID.")
+    if st.button("Log out"):
+        st.logout()
+    st.stop()
+
+
+# Initialize the database and load this user's data only once per login/session.
+try:
+    init_database()
+except Exception:
+    st.error(
+        "NEXUS could not connect to its cloud database. "
+        "Check the DATABASE_URL secret and redeploy."
+    )
+    st.stop()
+
+
+loaded_uid = st.session_state.get("nexus_loaded_uid")
+if loaded_uid != uid:
+    try:
+        loaded_state, existing_user = load_cloud_state(uid)
+    except Exception:
+        st.error("NEXUS could not load your cloud profile right now.")
+        st.stop()
+
+    st.session_state.public_data = loaded_state
+    st.session_state.nexus_loaded_uid = uid
+    st.session_state.nexus_existing_user = existing_user
+    st.session_state.current_page = "Dashboard"
+    st.session_state.pop("nexus_onboarded", None)
+
+
 if "public_data" not in st.session_state:
     st.session_state.public_data = default_state()
 
@@ -94,9 +322,9 @@ if "current_page" not in st.session_state:
 
 data = st.session_state.public_data
 
-
-def save_state():
-    st.session_state.public_data = data
+# If this Google account already has a completed cloud profile, skip onboarding.
+if data.get("profile", {}).get("onboarded"):
+    st.session_state.nexus_onboarded = True
 
 
 def now_local():
@@ -647,8 +875,8 @@ if not st.session_state.get("nexus_onboarded", False):
             <div class="mc-kicker">WELCOME</div>
             <div class="mc-title">Build your system.</div>
             <div class="mc-subtitle">
-                NEXUS is the public version of the personal operating system.
-                Make it yours before you enter.
+                Create your personal operating system once, then NEXUS will
+                securely load it whenever you sign in on another device.
             </div>
         </div>
         """,
@@ -658,7 +886,7 @@ if not st.session_state.get("nexus_onboarded", False):
     with st.form("nexus_onboarding"):
         onboard_name = st.text_input(
             "What's your name?",
-            value=data["profile"].get("name", ""),
+            value=data["profile"].get("name", "") or user_display_name(),
             placeholder="Alex",
         )
         onboard_system = st.text_input(
@@ -679,9 +907,10 @@ if not st.session_state.get("nexus_onboarded", False):
         )
 
         if submitted:
-            data["profile"]["name"] = onboard_name.strip()
+            data["profile"]["name"] = onboard_name.strip() or user_display_name()
             data["profile"]["system_name"] = onboard_system.strip() or "NEXUS"
             data["profile"]["timezone"] = onboard_tz.strip() or DEFAULT_TZ
+            data["profile"]["onboarded"] = True
             save_state()
             st.session_state.nexus_onboarded = True
             st.rerun()
@@ -698,7 +927,10 @@ with st.sidebar:
         f'<div class="mc-brand">{system_name()}</div>',
         unsafe_allow_html=True,
     )
-    st.caption("Public build • personal operating system")
+    st.caption("Cloud account • personal operating system")
+
+    login_label = user_display_name() or user_email() or "Google account"
+    st.caption(f"Signed in as **{login_label}**")
 
     for nav_page in PAGES:
         label = f"{PAGE_ICONS[nav_page]}  {nav_page}"
@@ -722,33 +954,52 @@ with st.sidebar:
 
     st.divider()
 
-    with st.expander("👤 Session profile"):
-        data["profile"]["name"] = st.text_input(
+    with st.expander("👤 Profile & cloud account"):
+        profile_name = st.text_input(
             "Your name",
             value=data["profile"].get("name", ""),
             key="profile_name",
         )
-        data["profile"]["system_name"] = st.text_input(
+        profile_system = st.text_input(
             "Name your system",
             value=data["profile"].get("system_name", "NEXUS"),
             placeholder="NEXUS",
             help="Examples: NEXUS, ORBIT, CORE, APEX",
             key="profile_system_name",
         )
-        data["profile"]["timezone"] = st.text_input(
+        profile_timezone = st.text_input(
             "Timezone",
             value=data["profile"].get("timezone", DEFAULT_TZ),
             help="Example: America/Los_Angeles",
             key="profile_timezone",
         )
-        save_state()
+
+        if st.button("Save profile", use_container_width=True, key="save_profile"):
+            data["profile"]["name"] = profile_name.strip()
+            data["profile"]["system_name"] = profile_system.strip() or "NEXUS"
+            data["profile"]["timezone"] = profile_timezone.strip() or DEFAULT_TZ
+            data["profile"]["onboarded"] = True
+            save_state()
+            st.success("Saved to NEXUS cloud.")
+
+        if st.button("Log out", use_container_width=True, key="logout_nexus"):
+            # Clear user-specific in-memory state before removing auth cookie.
+            for key in [
+                "public_data",
+                "nexus_loaded_uid",
+                "nexus_existing_user",
+                "nexus_onboarded",
+                "current_page",
+            ]:
+                st.session_state.pop(key, None)
+            st.logout()
 
     with st.expander("💾 Backup / restore"):
         backup_text = json.dumps(data, indent=2, default=str)
         st.download_button(
             "Download my data",
             backup_text,
-            file_name="max-control-backup.json",
+            file_name="nexus-backup.json",
             mime="application/json",
             use_container_width=True,
         )
@@ -762,11 +1013,19 @@ with st.sidebar:
             try:
                 restored = json.loads(uploaded_backup.getvalue().decode("utf-8"))
                 if isinstance(restored, dict):
-                    st.session_state.public_data = restored
-                    st.success("Backup restored.")
+                    st.session_state.public_data = merge_with_defaults(restored)
+                    data = st.session_state.public_data
+                    data["profile"]["onboarded"] = True
+                    save_state()
+                    st.success("Backup restored and saved to NEXUS cloud.")
                     st.rerun()
             except Exception as exc:
                 st.error(f"Could not restore backup: {exc}")
+
+    if st.session_state.get("cloud_save_error"):
+        st.warning(st.session_state["cloud_save_error"])
+    else:
+        st.caption("☁️ Cloud sync active")
 
     st.caption(APP_VERSION)
 
@@ -1418,6 +1677,6 @@ elif page == "Assistant":
 
 st.divider()
 st.caption(
-    f"{system_name()} • NEXUS Public Build • No Mac/PC control endpoints, no shared data.json, "
+    f"{system_name()} • NEXUS Cloud Build • Google login + private Neon persistence • "
     "no owner Canvas token, and no owner OpenAI key are included in this build."
 )
