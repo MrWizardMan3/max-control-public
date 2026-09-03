@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V2.3 • PREMIUM UI"
+APP_VERSION = "PUBLIC V2.3.1 • DASHBOARD NAV HOTFIX"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
@@ -596,7 +596,8 @@ def now_local():
 
 
 def go_to(page_name):
-    if page_name in PAGES:
+    valid_pages = {"Dashboard", "Upgrade", *ALL_MODULES}
+    if page_name in valid_pages:
         st.session_state.current_page = page_name
         st.rerun()
 
@@ -2868,12 +2869,13 @@ if page == "Dashboard":
                     "Assistant": "✦",
                 }.get(target, "→")
 
-                if st.button(
+                st.button(
                     f"{icon} {target}",
                     key=f"quick_{target}",
                     use_container_width=True,
-                ):
-                    go_to(target)
+                    on_click=go_to,
+                    args=(target,),
+                )
 
     action_cols = st.columns([1, 1, 1, 2])
 
@@ -2937,12 +2939,13 @@ if page == "Dashboard":
 
                 render_dashboard_snapshot(snap)
 
-                if st.button(
+                st.button(
                     f"Open {snap['page']}",
                     key=f"dash_open_{row_index}_{snap['page']}",
                     use_container_width=True,
-                ):
-                    go_to(snap["page"])
+                    on_click=go_to,
+                    args=(snap["page"],),
+                )
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
