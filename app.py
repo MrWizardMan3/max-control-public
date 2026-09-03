@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V2.2 • FREE + PRO FOUNDATION"
+APP_VERSION = "PUBLIC V2.3 • PREMIUM UI"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
@@ -1398,6 +1398,466 @@ st.markdown(
 )
 
 
+
+# ============================================================
+# V2.3 PREMIUM VISUAL SYSTEM
+# Final CSS layer intentionally overrides older style passes.
+# ============================================================
+
+st.markdown(
+    """
+    <style>
+    /* ---------- GLOBAL ---------- */
+    :root {
+        --nx0:#05070c;
+        --nx1:#080c14;
+        --nx2:#0c121d;
+        --nx3:#111927;
+        --nx-card:rgba(13,20,33,.84);
+        --nx-card-strong:rgba(15,23,38,.94);
+        --nx-border:rgba(137,172,235,.13);
+        --nx-border-hot:rgba(82,213,255,.34);
+        --nx-text:#f6f8fd;
+        --nx-muted:#7f8da5;
+        --nx-cyan:#4ddcff;
+        --nx-blue:#5b8cff;
+        --nx-violet:#a878ff;
+        --nx-pink:#ff70bd;
+        --nx-green:#55e3a1;
+        --nx-amber:#ffc36b;
+    }
+
+    html, body, [class*="css"] {
+        font-feature-settings:"ss01" 1, "cv02" 1, "cv03" 1;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(ellipse 60% 42% at 14% -8%, rgba(63,137,255,.16), transparent 68%),
+            radial-gradient(ellipse 52% 38% at 88% -4%, rgba(168,120,255,.12), transparent 70%),
+            radial-gradient(ellipse 44% 30% at 72% 102%, rgba(255,112,189,.045), transparent 75%),
+            linear-gradient(180deg, #070a11 0%, #05070c 62%, #04060a 100%) !important;
+    }
+
+    .block-container {
+        max-width: 1220px !important;
+        padding-top: .85rem !important;
+        padding-bottom: 5rem !important;
+    }
+
+    header[data-testid="stHeader"] {
+        background: rgba(5,7,12,.64) !important;
+        backdrop-filter: blur(24px) saturate(135%);
+        -webkit-backdrop-filter: blur(24px) saturate(135%);
+        border-bottom: 1px solid rgba(255,255,255,.035);
+    }
+
+    /* ---------- SCROLLBAR ---------- */
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(129,151,188,.22);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(129,151,188,.34); background-clip: padding-box; }
+
+    /* ---------- SIDEBAR ---------- */
+    [data-testid="stSidebar"] {
+        background:
+            radial-gradient(circle at 28% -4%, rgba(77,220,255,.075), transparent 28%),
+            radial-gradient(circle at 86% 18%, rgba(168,120,255,.07), transparent 25%),
+            linear-gradient(180deg, rgba(8,13,22,.995), rgba(6,9,15,.995)) !important;
+        border-right: 1px solid rgba(125,159,219,.11) !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        padding-top: .55rem;
+    }
+
+    [data-testid="stSidebar"] .mc-brand {
+        font-size: 1.18rem !important;
+        font-weight: 950 !important;
+        letter-spacing: .16em !important;
+        background: linear-gradient(90deg,#f8fbff 0%,#9edfff 52%,#c4a6ff 100%);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        padding: .3rem .05rem .5rem !important;
+    }
+
+    [data-testid="stSidebar"] .stButton > button {
+        min-height: 39px !important;
+        justify-content: flex-start !important;
+        padding: .5rem .72rem !important;
+        border-radius: 11px !important;
+        border: 1px solid transparent !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: #aeb8c9 !important;
+        font-size: .88rem !important;
+        transition: all .16s ease !important;
+    }
+
+    [data-testid="stSidebar"] .stButton > button:hover {
+        color: #fff !important;
+        background: rgba(91,140,255,.085) !important;
+        border-color: rgba(91,140,255,.13) !important;
+        transform: translateX(2px);
+    }
+
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,.055) !important;
+        margin: .8rem 0 !important;
+    }
+
+    /* ---------- HERO ---------- */
+    .mc-hero {
+        position:relative !important;
+        overflow:hidden !important;
+        border-radius: 22px !important;
+        padding: 1.35rem 1.45rem 1.42rem !important;
+        margin: .15rem 0 1.2rem !important;
+        border: 1px solid rgba(134,168,230,.15) !important;
+        background:
+            radial-gradient(circle at 88% 16%, rgba(168,120,255,.15), transparent 31%),
+            radial-gradient(circle at 7% 100%, rgba(77,220,255,.055), transparent 36%),
+            linear-gradient(135deg, rgba(16,25,41,.96), rgba(8,13,22,.97)) !important;
+        box-shadow:
+            0 24px 80px rgba(0,0,0,.31),
+            inset 0 1px 0 rgba(255,255,255,.025) !important;
+    }
+
+    .mc-hero::before {
+        height:2px !important;
+        background:linear-gradient(90deg,#4ddcff 0%,#5b8cff 34%,#a878ff 68%,#ff70bd 100%) !important;
+        opacity:.95;
+    }
+
+    .mc-hero::after {
+        content:"";
+        position:absolute;
+        width:260px;
+        height:260px;
+        border-radius:50%;
+        right:-110px;
+        top:-150px;
+        border:1px solid rgba(255,255,255,.035);
+        box-shadow:
+            0 0 0 38px rgba(255,255,255,.012),
+            0 0 0 78px rgba(255,255,255,.009);
+        pointer-events:none;
+    }
+
+    .mc-kicker {
+        color:#54ddff !important;
+        font-size:.67rem !important;
+        font-weight:950 !important;
+        letter-spacing:.20em !important;
+        opacity:.95;
+    }
+
+    .mc-title {
+        font-size:clamp(2.25rem,5.3vw,3.7rem) !important;
+        line-height:.96 !important;
+        letter-spacing:-.052em !important;
+        margin:.43rem 0 .56rem !important;
+        background:linear-gradient(180deg,#ffffff 0%,#eaf1ff 75%,#c5d0e2 100%);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+    }
+
+    .mc-subtitle {
+        max-width:820px !important;
+        color:#8795ab !important;
+        font-size:.94rem !important;
+        line-height:1.62 !important;
+    }
+
+    /* ---------- SECTION LABELS ---------- */
+    .mc-section {
+        position:relative;
+        margin-top:1.55rem !important;
+        margin-bottom:.55rem !important;
+        color:#d8e3f6 !important;
+        font-size:.68rem !important;
+        font-weight:950 !important;
+        letter-spacing:.17em !important;
+    }
+
+    .mc-section::after {
+        content:"";
+        display:inline-block;
+        vertical-align:middle;
+        height:1px;
+        width:52px;
+        margin-left:.7rem;
+        background:linear-gradient(90deg,rgba(77,220,255,.35),transparent);
+    }
+
+    /* ---------- CARDS ---------- */
+    .nx-module-card,
+    .mc-card,
+    .mc-task,
+    .mc-radar,
+    .mc-note,
+    .nx-pulse,
+    .nx-quick-shell,
+    div[data-testid="stMetric"] {
+        border:1px solid var(--nx-border) !important;
+        background:
+            linear-gradient(180deg, rgba(15,23,38,.91), rgba(9,14,24,.92)) !important;
+        box-shadow:
+            0 14px 38px rgba(0,0,0,.17),
+            inset 0 1px 0 rgba(255,255,255,.018) !important;
+    }
+
+    .nx-module-card {
+        min-height: 134px !important;
+        padding: 1rem 1.02rem !important;
+        border-radius: 17px !important;
+        transition: transform .18s ease,border-color .18s ease,box-shadow .18s ease !important;
+    }
+
+    .nx-module-card:hover {
+        transform:translateY(-3px) !important;
+        border-color:rgba(112,157,237,.24) !important;
+        box-shadow:
+            0 20px 50px rgba(0,0,0,.24),
+            0 0 0 1px rgba(91,140,255,.035) !important;
+    }
+
+    .nx-module-card::before {
+        height:2px !important;
+        opacity:.92;
+    }
+
+    .nx-eye {
+        color:#707f97 !important;
+        font-size:.62rem !important;
+        letter-spacing:.175em !important;
+    }
+
+    .nx-big {
+        font-size:1.96rem !important;
+        line-height:1.08 !important;
+        margin-top:.38rem !important;
+        color:#fbfcff !important;
+    }
+
+    .nx-label { color:#d8e1f0 !important; }
+    .nx-detail { color:#75839a !important; line-height:1.42 !important; }
+
+    .nx-pulse {
+        border-radius:18px !important;
+        padding:1.05rem 1.08rem !important;
+        background:
+            radial-gradient(circle at 92% 6%,rgba(168,120,255,.12),transparent 34%),
+            linear-gradient(145deg,rgba(13,22,37,.95),rgba(8,14,24,.95)) !important;
+    }
+
+    .nx-pulse-kicker {
+        color:#5be0ff !important;
+        letter-spacing:.19em !important;
+    }
+
+    .nx-pulse-copy {
+        color:#dbe6f5 !important;
+        line-height:1.65 !important;
+    }
+
+    .mc-task,
+    .mc-radar {
+        border-radius:14px !important;
+        padding:.84rem .92rem !important;
+        transition:border-color .16s ease,transform .16s ease;
+    }
+
+    .mc-task:hover,
+    .mc-radar:hover {
+        border-color:rgba(125,162,228,.23) !important;
+        transform:translateY(-1px);
+    }
+
+    /* ---------- BUTTONS ---------- */
+    .stButton > button,
+    .stFormSubmitButton > button {
+        min-height:42px !important;
+        border-radius:12px !important;
+        border:1px solid rgba(121,158,224,.18) !important;
+        background:
+            linear-gradient(180deg,rgba(18,28,46,.96),rgba(11,18,30,.96)) !important;
+        color:#eaf0fa !important;
+        font-weight:790 !important;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+        transition:all .16s ease !important;
+    }
+
+    .stButton > button:hover,
+    .stFormSubmitButton > button:hover {
+        border-color:rgba(77,220,255,.48) !important;
+        color:#fff !important;
+        transform:translateY(-1px);
+        box-shadow:
+            0 9px 24px rgba(0,0,0,.22),
+            0 0 24px rgba(77,220,255,.035) !important;
+    }
+
+    button[kind="primary"] {
+        background:
+            linear-gradient(135deg,rgba(65,135,255,.95),rgba(127,89,239,.94)) !important;
+        border-color:rgba(147,172,255,.42) !important;
+        color:white !important;
+        box-shadow:0 10px 30px rgba(77,102,220,.20) !important;
+    }
+
+    button[kind="primary"]:hover {
+        box-shadow:0 12px 34px rgba(88,105,235,.28) !important;
+    }
+
+    /* ---------- INPUTS ---------- */
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="textarea"] > div,
+    textarea,
+    input {
+        border-radius:11px !important;
+    }
+
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="textarea"] > div {
+        background:rgba(8,13,22,.88) !important;
+        border-color:rgba(126,161,224,.15) !important;
+        transition:border-color .15s ease,box-shadow .15s ease;
+    }
+
+    div[data-baseweb="input"] > div:focus-within,
+    div[data-baseweb="select"] > div:focus-within,
+    div[data-baseweb="textarea"] > div:focus-within {
+        border-color:rgba(77,220,255,.42) !important;
+        box-shadow:0 0 0 3px rgba(77,220,255,.045) !important;
+    }
+
+    label[data-testid="stWidgetLabel"] p {
+        color:#aeb9ca !important;
+        font-size:.82rem !important;
+        font-weight:730 !important;
+    }
+
+    /* ---------- EXPANDERS / TABS ---------- */
+    [data-testid="stExpander"] {
+        background:rgba(9,14,23,.62) !important;
+        border:1px solid rgba(126,161,224,.12) !important;
+        border-radius:14px !important;
+        overflow:hidden;
+    }
+
+    [data-testid="stExpander"] summary {
+        color:#dbe4f2 !important;
+        font-weight:780 !important;
+    }
+
+    .stTabs [data-baseweb="tab-list"] {
+        gap:.35rem;
+        border-bottom:1px solid rgba(255,255,255,.055);
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height:42px;
+        border-radius:10px 10px 0 0;
+        color:#8492a8;
+        font-weight:780;
+    }
+
+    .stTabs [aria-selected="true"] {
+        color:#f4f8ff !important;
+        background:rgba(91,140,255,.075) !important;
+    }
+
+    /* ---------- MISC STREAMLIT SURFACES ---------- */
+    [data-testid="stAlert"] {
+        border-radius:14px !important;
+        border-width:1px !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        font-weight:920 !important;
+        letter-spacing:-.035em !important;
+    }
+
+    [data-testid="stMetricLabel"] {
+        color:#8391a8 !important;
+    }
+
+    hr {
+        border-color:rgba(255,255,255,.06) !important;
+    }
+
+    a {
+        color:#67dcff !important;
+    }
+
+    /* ---------- LANDING ---------- */
+    .nx-landing-shell {
+        max-width:1120px;
+        margin:0 auto;
+    }
+
+    .nx-landing-hero {
+        border:1px solid rgba(131,166,230,.15) !important;
+        border-radius:26px !important;
+        background:
+            radial-gradient(circle at 80% 12%,rgba(168,120,255,.17),transparent 32%),
+            radial-gradient(circle at 20% 84%,rgba(77,220,255,.07),transparent 30%),
+            linear-gradient(145deg,rgba(13,21,36,.97),rgba(7,11,19,.97)) !important;
+        box-shadow:0 28px 90px rgba(0,0,0,.30) !important;
+    }
+
+    /* ---------- MOBILE ---------- */
+    @media (max-width:700px) {
+        .block-container {
+            padding-left:.78rem !important;
+            padding-right:.78rem !important;
+        }
+
+        .mc-hero {
+            border-radius:18px !important;
+            padding:1rem 1rem 1.08rem !important;
+        }
+
+        .mc-title {
+            font-size:2.22rem !important;
+        }
+
+        .mc-subtitle {
+            font-size:.88rem !important;
+        }
+
+        .mc-section {
+            margin-top:1.25rem !important;
+        }
+
+        .nx-module-card {
+            min-height:118px !important;
+            padding:.84rem .88rem !important;
+        }
+
+        .nx-big {
+            font-size:1.65rem !important;
+        }
+
+        .stButton > button,
+        .stFormSubmitButton > button {
+            min-height:44px !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 def page_header(kicker, title, subtitle):
     st.markdown(
         f"""
@@ -2119,7 +2579,12 @@ with st.sidebar:
         f'<div class="mc-brand">{system_name()}</div>',
         unsafe_allow_html=True,
     )
-    st.caption("Cloud account • personal operating system")
+    st.caption("NEXUS • PERSONAL OPERATING SYSTEM")
+    st.markdown(
+        f'<div style="margin:.1rem 0 .65rem;color:#718096;font-size:.72rem;">'
+        f'{current_plan().upper()} ACCESS • CLOUD SYNCED</div>',
+        unsafe_allow_html=True,
+    )
 
     login_label = user_display_name() or user_email() or "Google account"
     st.caption(f"Signed in as {login_label}")
@@ -2307,6 +2772,27 @@ if page == "Dashboard":
     modules = dashboard_module_order()
     missions = mission_stack()
     snapshots = [dashboard_snapshot(module) for module in modules]
+
+    active_mission_count = len([m for m in data.get("missions", []) if not m.get("completed")])
+    enabled_count = len(enabled_modules())
+    plan_name = current_plan().upper()
+    st.markdown(
+        f"""
+        <div style="
+            display:flex;
+            flex-wrap:wrap;
+            align-items:center;
+            gap:.48rem;
+            margin:-.22rem 0 .55rem 0;
+        ">
+            <span class="mc-pill">● SYSTEM ONLINE</span>
+            <span class="mc-pill">{plan_name} ACCESS</span>
+            <span class="mc-pill">{enabled_count} MODULES ACTIVE</span>
+            <span class="mc-pill">{active_mission_count} ACTIVE MISSIONS</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # --------------------------------------------------------
     # CUSTOMIZE DASHBOARD
