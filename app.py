@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V2.1 • CUSTOM DASHBOARD + PULSE FIX"
+APP_VERSION = "PUBLIC V2.2 • FREE + PRO FOUNDATION"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
@@ -63,6 +63,7 @@ PAGE_ICONS = {
     "Intel": "◈",
     "Pulse": "◎",
     "Assistant": "✦",
+    "Upgrade": "◆",
 }
 
 ALL_MODULES = [
@@ -76,6 +77,30 @@ ALL_MODULES = [
     "Pulse",
     "Assistant",
 ]
+
+PLAN_FEATURES = {
+    "Free": [
+        "Core dashboard",
+        "School tracking",
+        "Money tracking",
+        "Fitness logging",
+        "Missions + Planner",
+        "Vault notes",
+        "Basic Pulse",
+        "Basic Assistant",
+    ],
+    "Pro": [
+        "Everything in Free",
+        "Advanced Pulse analytics",
+        "AI study tools",
+        "Smart planning",
+        "Advanced automations",
+        "Premium integrations",
+        "Custom dashboard layouts",
+        "Deeper Assistant context",
+        "Priority feature access",
+    ],
+}
 
 
 # ============================================================
@@ -91,6 +116,9 @@ def default_state():
             "onboarded": False,
             "modules": list(ALL_MODULES),
             "primary_goal": "Stay organized",
+            "plan": "Free",
+            "founder": False,
+            "billing_status": "testing",
         },
         "tasks": [],
         "missions": [],
@@ -529,6 +557,10 @@ data = st.session_state.public_data
 # modules saved in Neon. Add the new V2 modules once, then preserve any future
 # customization the user makes.
 profile = data.setdefault("profile", {})
+profile.setdefault("plan", "Free")
+profile.setdefault("founder", False)
+profile.setdefault("billing_status", "testing")
+
 if not profile.get("v2_modules_migrated"):
     saved_modules = profile.get("modules") or []
     original_modules = {"School", "Money", "Fitness", "Intel", "Assistant"}
@@ -547,7 +579,7 @@ PAGES = ["Dashboard"] + [
         list(ALL_MODULES),
     )
     if module in ALL_MODULES
-]
+] + ["Upgrade"]
 
 # If this Google account already has a completed cloud profile, skip onboarding.
 if data.get("profile", {}).get("onboarded"):
@@ -1710,6 +1742,64 @@ def context_snapshot():
 # ADAPTIVE DASHBOARD HELPERS
 # ============================================================
 
+def current_plan():
+    return data.setdefault("profile", {}).get("plan", "Free")
+
+
+def is_pro():
+    return current_plan() == "Pro"
+
+
+def plan_badge_html():
+    plan = current_plan()
+    founder = data.setdefault("profile", {}).get("founder", False)
+    tone = "#67d7ff" if plan == "Free" else "#b995ff"
+    founder_chip = (
+        '<span style="margin-left:.45rem;padding:.14rem .45rem;border-radius:999px;'
+        'background:rgba(255,190,80,.12);border:1px solid rgba(255,190,80,.28);'
+        'color:#ffc76a;font-size:.70rem;font-weight:900;letter-spacing:.08em;">FOUNDER</span>'
+        if founder else ""
+    )
+    return (
+        f'<span style="padding:.16rem .5rem;border-radius:999px;'
+        f'background:rgba(255,255,255,.04);border:1px solid {tone}55;'
+        f'color:{tone};font-size:.72rem;font-weight:900;letter-spacing:.08em;">'
+        f'{plan.upper()}</span>{founder_chip}'
+    )
+
+
+def pro_gate(feature_name, detail):
+    if is_pro():
+        return True
+
+    st.markdown(
+        f"""
+        <div style="
+            padding:1rem 1.05rem;
+            border:1px solid rgba(185,149,255,.24);
+            border-radius:16px;
+            background:linear-gradient(145deg,rgba(23,17,39,.78),rgba(12,15,26,.92));
+            margin:.5rem 0 1rem 0;
+        ">
+            <div style="color:#b995ff;font-size:.72rem;font-weight:900;letter-spacing:.12em;">
+                NEXUS PRO
+            </div>
+            <div style="font-size:1rem;font-weight:900;color:#f7f9ff;margin:.25rem 0;">
+                {feature_name}
+            </div>
+            <div style="color:#8f9bb1;font-size:.88rem;line-height:1.5;">
+                {detail}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if st.button("View Pro", key=f"gate_{feature_name}", use_container_width=True):
+        go_to("Upgrade")
+    return False
+
+
 def dashboard_module_order():
     enabled = enabled_modules()
     profile = data.setdefault("profile", {})
@@ -2211,7 +2301,7 @@ if page == "Dashboard":
     page_header(
         "NEXUS // COMMAND CENTER",
         system_name(),
-        f"{greeting} Current focus: {focus}.",
+        f"{greeting} Current focus: {focus}.<br><br>{plan_badge_html()}",
     )
 
     modules = dashboard_module_order()
@@ -2657,6 +2747,13 @@ elif page == "Pulse":
             st.markdown(f"- {item}")
 
     st.caption("Pulse becomes smarter as NEXUS gets more integrations and history.")
+
+    st.markdown('<div class="mc-section">PRO ANALYTICS</div>', unsafe_allow_html=True)
+    if pro_gate(
+        "Advanced Pulse Analytics",
+        "Trend lines, weekly comparisons, streak analysis, deeper recommendations, and cross-module insights.",
+    ):
+        st.success("Pro analytics test mode is enabled for this account.")
 
 
 # ============================================================
@@ -3247,10 +3344,99 @@ elif page == "Assistant":
         save_state()
 
     if history:
+        st.markdown('<div class="mc-section">PRO INTELLIGENCE</div>', unsafe_allow_html=True)
+        if pro_gate(
+            "Deeper Assistant Context",
+            "Future Pro mode can use more NEXUS history, planning context, analytics, and automation data in one answer.",
+        ):
+            st.caption("This account can use the deeper-context Assistant layer.")
+
         if st.button("Clear conversation"):
             data["assistant_history"] = []
             save_state()
             st.rerun()
+
+
+# ============================================================
+# UPGRADE
+# ============================================================
+
+elif page == "Upgrade":
+    page_header(
+        "NEXUS Pro",
+        "UPGRADE // PLANS",
+        "Design and test the paid layer before real billing goes live.",
+    )
+
+    st.markdown(
+        """
+        <div style="
+            padding:1.35rem;
+            border:1px solid rgba(103,215,255,.18);
+            border-radius:20px;
+            background:rgba(13,19,31,.78);
+            margin-bottom:1rem;
+        ">
+            <div style="font-size:.78rem;letter-spacing:.14em;color:#67d7ff;font-weight:900;">
+                EARLY ACCESS PRICING PREVIEW
+            </div>
+            <div style="font-size:1.75rem;font-weight:950;margin:.35rem 0 .45rem 0;">
+                Free stays useful. Pro makes NEXUS intelligent.
+            </div>
+            <div style="color:#8f9bb1;line-height:1.6;">
+                Billing is not active yet. These controls only let us test how Free and Pro
+                should feel before Stripe is connected.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    free_col, pro_col = st.columns(2)
+
+    with free_col:
+        st.markdown("### NEXUS Free")
+        st.markdown("## $0")
+        st.caption("The core personal command center.")
+        for item in PLAN_FEATURES["Free"]:
+            st.write(f"✓ {item}")
+
+        if current_plan() == "Free":
+            st.success("Current test plan")
+        elif st.button("Switch test account to Free", use_container_width=True):
+            data["profile"]["plan"] = "Free"
+            save_state()
+            st.rerun()
+
+    with pro_col:
+        st.markdown("### NEXUS Pro")
+        st.markdown("## $5–8/mo")
+        st.caption("Planned range — not final pricing.")
+        for item in PLAN_FEATURES["Pro"]:
+            st.write(f"✓ {item}")
+
+        if current_plan() == "Pro":
+            st.success("Pro test mode enabled")
+        elif st.button("Preview Pro on this account", type="primary", use_container_width=True):
+            data["profile"]["plan"] = "Pro"
+            save_state()
+            st.rerun()
+
+    st.divider()
+    st.markdown("### Early tester status")
+    founder = st.toggle(
+        "Founder badge",
+        value=data["profile"].get("founder", False),
+        help="Temporary testing control. Later this would be assigned only to invited early users.",
+    )
+    if founder != data["profile"].get("founder", False):
+        data["profile"]["founder"] = founder
+        save_state()
+        st.rerun()
+
+    st.info(
+        "No card is charged and no Stripe checkout exists in V2.2. This is the product/pricing foundation only."
+    )
 
 
 # ============================================================
