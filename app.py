@@ -24,7 +24,6 @@ st.set_page_config(
 APP_VERSION = "PUBLIC V1.2 • PERSONALIZED NEXUS"
 DEFAULT_TZ = "America/Los_Angeles"
 
-PAGES = ["Dashboard"] + enabled_modules()
 
 PAGE_ICONS = {
     "Dashboard": "⚡",
@@ -316,6 +315,16 @@ if "current_page" not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
 data = st.session_state.public_data
+
+# Navigation depends on this signed-in user's saved module choices.
+PAGES = ["Dashboard"] + [
+    module
+    for module in data.get("profile", {}).get(
+        "modules",
+        ["School", "Money", "Fitness", "Intel", "Assistant"],
+    )
+    if module in ["School", "Money", "Fitness", "Intel", "Assistant"]
+]
 
 # If this Google account already has a completed cloud profile, skip onboarding.
 if data.get("profile", {}).get("onboarded"):
