@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V2.0.1 • MODULE MIGRATION FIX"
+APP_VERSION = "PUBLIC V2.1 • CUSTOM DASHBOARD + PULSE FIX"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
@@ -1712,20 +1712,30 @@ def context_snapshot():
 
 def dashboard_module_order():
     enabled = enabled_modules()
-    focus = data.get("profile", {}).get("primary_goal", "Stay organized")
+    profile = data.setdefault("profile", {})
 
+    saved = profile.get("dashboard_modules")
+    if isinstance(saved, list):
+        chosen = [m for m in saved if m in enabled]
+        if chosen:
+            return chosen
+
+    focus = profile.get("primary_goal", "Stay organized")
     preferred = {
-        "Stay organized": ["Intel", "School", "Money", "Fitness", "Assistant"],
-        "Do better in school": ["School", "Intel", "Assistant", "Money", "Fitness"],
-        "Save more money": ["Money", "Intel", "Assistant", "School", "Fitness"],
-        "Get in better shape": ["Fitness", "Intel", "Assistant", "Money", "School"],
-        "Hit long-term goals": ["Intel", "Money", "School", "Fitness", "Assistant"],
-        "Use AI to stay ahead": ["Assistant", "Intel", "School", "Money", "Fitness"],
+        "Stay organized": ["Missions", "Planner", "School", "Money", "Fitness", "Pulse", "Vault", "Intel", "Assistant"],
+        "Finish my missions": ["Missions", "Planner", "Pulse", "School", "Money", "Fitness", "Vault", "Intel", "Assistant"],
+        "Plan my time better": ["Planner", "Missions", "School", "Pulse", "Fitness", "Money", "Vault", "Intel", "Assistant"],
+        "Do better in school": ["School", "Planner", "Missions", "Pulse", "Vault", "Assistant", "Money", "Fitness", "Intel"],
+        "Save more money": ["Money", "Pulse", "Missions", "Planner", "School", "Fitness", "Vault", "Intel", "Assistant"],
+        "Get in better shape": ["Fitness", "Pulse", "Planner", "Missions", "Money", "School", "Vault", "Intel", "Assistant"],
+        "Build my personal knowledge": ["Vault", "Assistant", "Intel", "Missions", "Planner", "School", "Money", "Fitness", "Pulse"],
+        "Stay informed": ["Intel", "Vault", "Assistant", "Pulse", "Missions", "Planner", "School", "Money", "Fitness"],
+        "Hit long-term goals": ["Missions", "Pulse", "Planner", "Money", "Fitness", "School", "Vault", "Intel", "Assistant"],
+        "Use AI to stay ahead": ["Assistant", "Vault", "Intel", "Pulse", "Missions", "Planner", "School", "Money", "Fitness"],
     }.get(
         focus,
-        ["Intel", "School", "Money", "Fitness", "Assistant"],
+        ["Missions", "Planner", "School", "Money", "Fitness", "Pulse", "Vault", "Intel", "Assistant"],
     )
-
     return [module for module in preferred if module in enabled]
 
 
@@ -1769,6 +1779,32 @@ def render_dashboard_snapshot(snap):
 
 
 def dashboard_snapshot(module):
+    if module == "Missions":
+        open_items = [m for m in data.get("missions", []) if not m.get("done")]
+        high = len([m for m in open_items if m.get("priority") == "High"])
+        return {
+            "color": "purple",
+            "eyebrow": "MISSIONS",
+            "value": str(len(open_items)),
+            "label": "active missions",
+            "detail": f"{high} high priority",
+            "page": "Missions",
+        }
+
+    if module == "Planner":
+        today = now_local().date().isoformat()
+        events = data.setdefault("planner", {}).setdefault("events", [])
+        upcoming = [e for e in events if e.get("date", "") >= today]
+        today_count = len([e for e in upcoming if e.get("date") == today])
+        return {
+            "color": "cyan",
+            "eyebrow": "PLANNER",
+            "value": str(len(upcoming)),
+            "label": "upcoming events",
+            "detail": f"{today_count} scheduled today",
+            "page": "Planner",
+        }
+
     if module == "School":
         items = active_school_items()
         due_soon = 0
@@ -1778,7 +1814,6 @@ def dashboard_snapshot(module):
                 seconds = (due - now_local()).total_seconds()
                 if 0 <= seconds <= 7 * 86400:
                     due_soon += 1
-
         return {
             "color": "purple",
             "eyebrow": "SCHOOL",
@@ -1812,7 +1847,6 @@ def dashboard_snapshot(module):
                     recent += 1
             except Exception:
                 pass
-
         return {
             "color": "pink",
             "eyebrow": "FITNESS",
@@ -1820,6 +1854,17 @@ def dashboard_snapshot(module):
             "label": "workouts this week",
             "detail": f"{len(workouts)} total workouts logged",
             "page": "Fitness",
+        }
+
+    if module == "Vault":
+        notes = data.setdefault("vault", {}).setdefault("notes", [])
+        return {
+            "color": "blue",
+            "eyebrow": "VAULT",
+            "value": str(len(notes)),
+            "label": "saved memories",
+            "detail": "Notes, ideas, links, and references",
+            "page": "Vault",
         }
 
     if module == "Intel":
@@ -1833,6 +1878,39 @@ def dashboard_snapshot(module):
             "label": "future radar items",
             "detail": f"{len(open_captures)} open captures",
             "page": "Intel",
+        }
+
+    if module == "Pulse":
+        school_open = len(active_school_items())
+        open_missions = len([m for m in data.get("missions", []) if not m.get("done")])
+
+        workouts = data["fitness"].get("workouts", [])
+        cutoff = now_local().date() - timedelta(days=7)
+        recent = 0
+        for workout in workouts:
+            try:
+                if date.fromisoformat(workout.get("date", "")) >= cutoff:
+                    recent += 1
+            except Exception:
+                pass
+
+        savings = safe_float(data.get("money", {}).get("savings"))
+        goal = max(1.0, safe_float(data.get("money", {}).get("goal"), 1.0))
+        savings_pct = max(0, min(100, int((savings / goal) * 100)))
+
+        school_score = max(35, min(100, 100 - min(school_open, 10) * 5))
+        mission_score = max(40, min(100, 100 - min(open_missions, 10) * 4))
+        fitness_score = max(35, min(100, 40 + recent * 15))
+        money_score = max(35, min(100, 40 + int(savings_pct * .6)))
+        score = round((school_score + mission_score + fitness_score + money_score) / 4)
+
+        return {
+            "color": "blue",
+            "eyebrow": "PULSE",
+            "value": str(score),
+            "label": "system health",
+            "detail": "School • Missions • Fitness • Money",
+            "page": "Pulse",
         }
 
     return {
@@ -2141,6 +2219,44 @@ if page == "Dashboard":
     snapshots = [dashboard_snapshot(module) for module in modules]
 
     # --------------------------------------------------------
+    # CUSTOMIZE DASHBOARD
+    # --------------------------------------------------------
+    with st.expander("⚙ Customize Dashboard"):
+        st.caption("Choose exactly which NEXUS cards you want on your Command Center.")
+        enabled_for_dashboard = enabled_modules()
+        current_dashboard = [
+            m for m in data.setdefault("profile", {}).get("dashboard_modules", modules)
+            if m in enabled_for_dashboard
+        ]
+        if not current_dashboard:
+            current_dashboard = list(modules)
+
+        selected_dashboard = st.multiselect(
+            "Dashboard cards",
+            enabled_for_dashboard,
+            default=current_dashboard,
+            key="dashboard_card_picker",
+            help="These cards also control the Dashboard quick-access buttons.",
+        )
+
+        save_col, reset_col = st.columns(2)
+
+        with save_col:
+            if st.button("Save Dashboard", type="primary", use_container_width=True):
+                if selected_dashboard:
+                    data["profile"]["dashboard_modules"] = selected_dashboard
+                    save_state()
+                    st.rerun()
+                else:
+                    st.warning("Keep at least one dashboard card.")
+
+        with reset_col:
+            if st.button("Reset Dashboard", use_container_width=True):
+                data["profile"].pop("dashboard_modules", None)
+                save_state()
+                st.rerun()
+
+    # --------------------------------------------------------
     # QUICK ACCESS
     # --------------------------------------------------------
     st.markdown(
@@ -2157,17 +2273,22 @@ if page == "Dashboard":
     )
 
     quick_pages = quick_access_pages()
-    quick_cols = st.columns(5)
 
-    for idx in range(5):
-        with quick_cols[idx]:
-            if idx < len(quick_pages):
-                target = quick_pages[idx]
+    for quick_start in range(0, len(quick_pages), 5):
+        quick_row = quick_pages[quick_start:quick_start + 5]
+        quick_cols = st.columns(len(quick_row))
+
+        for idx, target in enumerate(quick_row):
+            with quick_cols[idx]:
                 icon = {
+                    "Missions": "🎯",
+                    "Planner": "📅",
                     "School": "🎓",
                     "Money": "💰",
                     "Fitness": "🏋️",
+                    "Vault": "🗂️",
                     "Intel": "🧠",
+                    "Pulse": "◎",
                     "Assistant": "✦",
                 }.get(target, "→")
 
@@ -2177,8 +2298,6 @@ if page == "Dashboard":
                     use_container_width=True,
                 ):
                     go_to(target)
-            else:
-                st.write("")
 
     action_cols = st.columns([1, 1, 1, 2])
 
@@ -2493,7 +2612,7 @@ elif page == "Pulse":
     page_header("NEXUS Pulse", "PULSE // SYSTEM HEALTH", "See what is going well and what needs your attention.")
 
     open_missions = len([m for m in data.get("missions", []) if not m.get("done")])
-    school_open = len([x for x in combined_assignments() if not x.get("submitted")])
+    school_open = len(active_school_items())
 
     workouts_7 = 0
     cutoff = now_local().date() - timedelta(days=7)
