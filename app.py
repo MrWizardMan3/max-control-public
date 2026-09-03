@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V2.3.1 • DASHBOARD NAV HOTFIX"
+APP_VERSION = "PUBLIC V2.4 • SMART WEEK"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
@@ -93,7 +93,7 @@ PLAN_FEATURES = {
         "Everything in Free",
         "Advanced Pulse analytics",
         "AI study tools",
-        "Smart planning",
+        "Smart Week school planning",
         "Advanced automations",
         "Premium integrations",
         "Custom dashboard layouts",
@@ -2020,6 +2020,121 @@ def active_school_items():
     return items
 
 
+
+def school_items_due_within(days=7):
+    now = now_local()
+    cutoff = now + timedelta(days=days)
+    planned = []
+
+    for item in active_school_items():
+        due = parse_due(item.get("due_at"))
+        if not due:
+            continue
+        if due < now or due > cutoff:
+            continue
+
+        hours_left = max(0, (due - now).total_seconds() / 3600)
+        if hours_left <= 24:
+            priority = "High"
+            sessions = 2
+        elif hours_left <= 72:
+            priority = "High"
+            sessions = 2
+        elif hours_left <= 120:
+            priority = "Medium"
+            sessions = 1
+        else:
+            priority = "Medium"
+            sessions = 1
+
+        planned.append({
+            "id": str(item.get("id") or item.get("name") or datetime.now().timestamp()),
+            "name": item.get("name", "Assignment"),
+            "course": item.get("course", "School"),
+            "due": due,
+            "priority": priority,
+            "sessions": sessions,
+        })
+
+    planned.sort(key=lambda x: x["due"])
+    return planned
+
+
+def build_smart_school_week():
+    school_items = school_items_due_within(7)
+    if not school_items:
+        return 0, 0
+
+    missions = data.setdefault("missions", [])
+    events = data.setdefault("planner", {}).setdefault("events", [])
+
+    existing_mission_sources = {
+        str(m.get("source_school_id"))
+        for m in missions
+        if m.get("source_school_id") is not None
+    }
+    existing_event_keys = {
+        (str(e.get("source_school_id")), int(e.get("study_session", 0)))
+        for e in events
+        if e.get("source_school_id") is not None
+    }
+
+    mission_count = 0
+    event_count = 0
+    now = now_local()
+
+    study_times = ["18:00", "19:30"]
+
+    for item in school_items:
+        source_id = item["id"]
+        due = item["due"]
+
+        if source_id not in existing_mission_sources:
+            missions.append({
+                "id": f"smart-mission-{source_id}-{datetime.now().timestamp()}",
+                "name": item["name"],
+                "detail": f"Finish {item['course']} work before {due.strftime('%a %b %-d')}",
+                "priority": item["priority"],
+                "due": due.date().isoformat(),
+                "done": False,
+                "source": "NEXUS Smart Week",
+                "source_school_id": source_id,
+            })
+            mission_count += 1
+
+        days_until = max(0, (due.date() - now.date()).days)
+
+        for session_num in range(1, item["sessions"] + 1):
+            key = (source_id, session_num)
+            if key in existing_event_keys:
+                continue
+
+            if days_until <= 1:
+                study_date = now.date()
+            elif item["sessions"] == 2 and session_num == 1:
+                study_date = max(now.date(), due.date() - timedelta(days=2))
+            else:
+                study_date = max(now.date(), due.date() - timedelta(days=1))
+
+            if study_date > due.date():
+                study_date = due.date()
+
+            events.append({
+                "id": f"smart-event-{source_id}-{session_num}-{datetime.now().timestamp()}",
+                "name": f"Study • {item['name']}",
+                "type": "Class",
+                "date": study_date.isoformat(),
+                "time": study_times[min(session_num - 1, len(study_times) - 1)],
+                "source": "NEXUS Smart Week",
+                "source_school_id": source_id,
+                "study_session": session_num,
+            })
+            event_count += 1
+
+    save_state()
+    return mission_count, event_count
+
+
 # ============================================================
 # INTEL
 # ============================================================
@@ -3133,6 +3248,22 @@ elif page == "Planner":
 
     events = sorted(data.setdefault("planner", {}).setdefault("events", []), key=lambda e: (e.get("date", ""), e.get("time", "")))
     future_events = [e for e in events if e.get("date", "") >= now_local().date().isoformat()]
+
+    smart_events = [e for e in future_events if e.get("source") == "NEXUS Smart Week"]
+    if smart_events:
+        st.markdown(
+            f"""
+            <div class="nx-pulse">
+                <div class="nx-pulse-kicker">SMART WEEK ACTIVE</div>
+                <div class="nx-pulse-copy">
+                    NEXUS has {len(smart_events)} automatic school study block{'s' if len(smart_events) != 1 else ''}
+                    currently scheduled.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     st.markdown('<div class="mc-section">UPCOMING</div>', unsafe_allow_html=True)
     if not future_events:
         st.info("Your planner is clear.")
@@ -3416,6 +3547,60 @@ elif page == "School":
                         st.rerun()
                 else:
                     st.caption("✓ Done")
+
+
+    st.markdown('<div class="mc-section">NEXUS SMART WEEK</div>', unsafe_allow_html=True)
+
+    if pro_gate(
+        "Smart School Planner",
+        "NEXUS scans school work due in the next 7 days, ranks urgency, creates Missions, and adds study blocks to your Planner automatically.",
+    ):
+        smart_items = school_items_due_within(7)
+
+        if not smart_items:
+            st.info("No school assignments with due dates were found in the next 7 days.")
+        else:
+            high_count = len([x for x in smart_items if x["priority"] == "High"])
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Next 7 days", len(smart_items))
+            c2.metric("High priority", high_count)
+            c3.metric("Study blocks", sum(x["sessions"] for x in smart_items))
+
+            with st.expander("Preview Smart Week", expanded=True):
+                for item in smart_items[:12]:
+                    due_text = item["due"].strftime("%a %b %-d • %-I:%M %p")
+                    st.markdown(
+                        f"""
+                        <div class="mc-task">
+                            <div class="mc-task-title">{item['name']}</div>
+                            <div class="mc-task-meta">
+                                {item['course']} • {item['priority']} priority • Due {due_text} •
+                                {item['sessions']} study block{'s' if item['sessions'] != 1 else ''}
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+            st.caption(
+                "Smart Week currently uses a simple planning engine so it works without an AI key. "
+                "It avoids duplicating school items that it already planned."
+            )
+
+            if st.button(
+                "Build My Week",
+                type="primary",
+                use_container_width=True,
+                key="build_smart_school_week",
+            ):
+                missions_added, events_added = build_smart_school_week()
+                if missions_added == 0 and events_added == 0:
+                    st.success("Your Smart Week is already up to date.")
+                else:
+                    st.success(
+                        f"NEXUS added {missions_added} mission(s) and "
+                        f"{events_added} study block(s) to your Planner."
+                    )
 
 
 # ============================================================
