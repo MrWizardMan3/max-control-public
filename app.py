@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.2 • PERSONALIZED NEXUS"
+APP_VERSION = "PUBLIC V1.3 • ADAPTIVE COMMAND CENTER"
 DEFAULT_TZ = "America/Los_Angeles"
 
 
@@ -576,6 +576,203 @@ st.markdown(
 )
 
 
+
+st.markdown(
+    """
+    <style>
+    :root {
+        --nx-bg: #050811;
+        --nx-panel: rgba(12,18,31,.90);
+        --nx-panel2: rgba(15,23,39,.86);
+        --nx-line: rgba(126,162,230,.15);
+        --nx-text: #f7f9ff;
+        --nx-muted: #8390a8;
+        --nx-cyan: #3ad9ff;
+        --nx-blue: #4b92ff;
+        --nx-purple: #a978ff;
+        --nx-pink: #ff65c8;
+        --nx-green: #42db82;
+        --nx-red: #ff626e;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(circle at 4% 0%, rgba(75,146,255,.18), transparent 27%),
+            radial-gradient(circle at 96% 3%, rgba(169,120,255,.13), transparent 25%),
+            radial-gradient(circle at 82% 88%, rgba(255,101,200,.055), transparent 24%),
+            linear-gradient(180deg, #070b13 0%, #050811 58%, #04070d 100%);
+    }
+
+    header[data-testid="stHeader"] {
+        background: rgba(5,8,16,.70);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(255,255,255,.035);
+    }
+
+    [data-testid="stSidebar"] {
+        background:
+            radial-gradient(circle at 12% 0%, rgba(75,146,255,.12), transparent 28%),
+            radial-gradient(circle at 92% 24%, rgba(169,120,255,.08), transparent 24%),
+            linear-gradient(180deg, #09101b 0%, #070b12 100%);
+        border-right: 1px solid rgba(126,162,230,.13);
+    }
+
+    .block-container {
+        max-width: 1240px;
+        padding-top: 1rem;
+        padding-bottom: 4rem;
+    }
+
+    .mc-hero {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(126,162,230,.16);
+        background:
+            radial-gradient(circle at 90% 12%, rgba(169,120,255,.17), transparent 30%),
+            linear-gradient(135deg, rgba(15,25,43,.96), rgba(8,13,23,.94));
+        border-radius: 21px;
+        padding: 1.25rem 1.35rem;
+        box-shadow: 0 22px 70px rgba(0,0,0,.21);
+    }
+
+    .mc-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 100%;
+        background: linear-gradient(90deg, #3ad9ff, #4b92ff, #a978ff, #ff65c8);
+    }
+
+    .mc-kicker {
+        color: #4bdcff;
+        font-size: .70rem;
+        font-weight: 900;
+        letter-spacing: .19em;
+    }
+
+    .mc-title {
+        color: #f8fbff;
+        font-size: clamp(2.35rem, 6vw, 4.2rem);
+        font-weight: 950;
+        letter-spacing: -.055em;
+        line-height: .95;
+        margin-top: .38rem;
+    }
+
+    .mc-subtitle {
+        color: #8a98b0;
+        max-width: 790px;
+    }
+
+    .mc-section {
+        color: #dfe8ff;
+        letter-spacing: .13em;
+        font-size: .72rem;
+        font-weight: 950;
+        margin-top: 1.45rem;
+    }
+
+    .mc-card,
+    .mc-task,
+    .mc-radar,
+    .mc-note,
+    div[data-testid="stMetric"] {
+        border-color: rgba(126,162,230,.13);
+        background: linear-gradient(180deg, rgba(15,23,39,.91), rgba(8,14,24,.88));
+        box-shadow: 0 14px 38px rgba(0,0,0,.13);
+    }
+
+    .nx-module-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 18px;
+        border: 1px solid rgba(126,162,230,.15);
+        background: linear-gradient(180deg, rgba(15,23,39,.94), rgba(8,14,24,.92));
+        padding: 1rem 1.05rem;
+        min-height: 142px;
+        margin-bottom: .65rem;
+    }
+
+    .nx-module-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 100%;
+        background: linear-gradient(
+            90deg,
+            var(--c1, #3ad9ff),
+            var(--c2, #a978ff)
+        );
+    }
+
+    .nx-module-card.purple { --c1:#a978ff; --c2:#ff65c8; }
+    .nx-module-card.green { --c1:#42db82; --c2:#42e5c5; }
+    .nx-module-card.pink { --c1:#ff626e; --c2:#ff65c8; }
+    .nx-module-card.cyan { --c1:#3ad9ff; --c2:#4b92ff; }
+    .nx-module-card.blue { --c1:#4b92ff; --c2:#a978ff; }
+
+    .nx-eye {
+        color: #78869e;
+        font-size: .67rem;
+        font-weight: 950;
+        letter-spacing: .16em;
+    }
+
+    .nx-big {
+        color: #f9fbff;
+        font-size: 2rem;
+        font-weight: 950;
+        letter-spacing: -.04em;
+        margin-top: .34rem;
+    }
+
+    .nx-label {
+        color: #dce6f8;
+        font-size: .88rem;
+        font-weight: 850;
+        margin-top: .06rem;
+    }
+
+    .nx-detail {
+        color: #79879f;
+        font-size: .77rem;
+        margin-top: .32rem;
+    }
+
+    .stButton > button {
+        border-radius: 11px;
+        border: 1px solid rgba(116,163,255,.25);
+        background: rgba(14,22,37,.90);
+        color: #f6f9ff;
+        font-weight: 760;
+    }
+
+    .stButton > button:hover {
+        border-color: rgba(58,217,255,.68);
+        box-shadow: 0 0 0 1px rgba(58,217,255,.08), 0 10px 30px rgba(0,0,0,.18);
+    }
+
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="input"] > div,
+    textarea {
+        background: rgba(10,16,28,.92);
+        border-color: rgba(126,162,230,.16);
+    }
+
+    @media (max-width: 700px) {
+        .mc-title { font-size: 2.55rem; }
+        .nx-module-card { min-height: 128px; }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 def page_header(kicker, title, subtitle):
     st.markdown(
         f"""
@@ -777,8 +974,34 @@ def mission_stack():
             }
         )
 
-    missions.sort(key=lambda x: x["score"], reverse=True)
-    return missions[:8]
+    enabled = set(enabled_modules())
+    focus = data.get("profile", {}).get("primary_goal", "Stay organized")
+
+    focus_module = {
+        "Do better in school": "School",
+        "Save more money": "Money",
+        "Get in better shape": "Fitness",
+        "Hit long-term goals": "Intel",
+        "Use AI to stay ahead": "Assistant",
+    }.get(focus)
+
+    filtered = []
+    for mission in missions:
+        mission_type = mission.get("type", "")
+        module_type = "Intel" if mission_type == "Task" else mission_type
+
+        if module_type in {"School", "Money", "Fitness", "Intel", "Assistant"}:
+            if module_type not in enabled:
+                continue
+
+        item = dict(mission)
+        if focus_module and module_type == focus_module:
+            item["score"] = min(100, item.get("score", 0) + 12)
+
+        filtered.append(item)
+
+    filtered.sort(key=lambda x: x["score"], reverse=True)
+    return filtered[:8]
 
 
 def local_brief():
@@ -801,14 +1024,14 @@ def local_brief():
     if missions:
         lead = missions[0]
         return (
-            f"Top priority: **{lead['title']}** ({lead['detail']}). "
-            f"Savings is **{savings_pct:.0f}%** of target and you've logged "
-            f"**{recent_workouts} workout{'s' if recent_workouts != 1 else ''}** in the last 7 days."
+            f"Top priority: {lead['title']} ({lead['detail']}). "
+            f"Savings is {savings_pct:.0f}% of target and you've logged "
+            f"{recent_workouts} workout{'s' if recent_workouts != 1 else ''} in the last 7 days."
         )
 
     return (
-        f"No urgent missions are stacked right now. Savings is **{savings_pct:.0f}%** "
-        f"of target and you've logged **{recent_workouts} workout{'s' if recent_workouts != 1 else ''}** "
+        f"No urgent missions are stacked right now. Savings is {savings_pct:.0f}% "
+        f"of target and you've logged {recent_workouts} workout{'s' if recent_workouts != 1 else ''} "
         "in the last 7 days."
     )
 
@@ -874,6 +1097,106 @@ def context_snapshot():
         "fitness": data["fitness"],
         "missions": mission_stack(),
         "intel": data["intel"],
+    }
+
+
+# ============================================================
+# ADAPTIVE DASHBOARD HELPERS
+# ============================================================
+
+def dashboard_module_order():
+    enabled = enabled_modules()
+    focus = data.get("profile", {}).get("primary_goal", "Stay organized")
+
+    preferred = {
+        "Stay organized": ["Intel", "School", "Money", "Fitness", "Assistant"],
+        "Do better in school": ["School", "Intel", "Assistant", "Money", "Fitness"],
+        "Save more money": ["Money", "Intel", "Assistant", "School", "Fitness"],
+        "Get in better shape": ["Fitness", "Intel", "Assistant", "Money", "School"],
+        "Hit long-term goals": ["Intel", "Money", "School", "Fitness", "Assistant"],
+        "Use AI to stay ahead": ["Assistant", "Intel", "School", "Money", "Fitness"],
+    }.get(
+        focus,
+        ["Intel", "School", "Money", "Fitness", "Assistant"],
+    )
+
+    return [module for module in preferred if module in enabled]
+
+
+def dashboard_snapshot(module):
+    if module == "School":
+        items = active_school_items()
+        due_soon = 0
+        for item in items:
+            due = parse_due(item.get("due_at"))
+            if due:
+                seconds = (due - now_local()).total_seconds()
+                if 0 <= seconds <= 7 * 86400:
+                    due_soon += 1
+
+        return {
+            "color": "purple",
+            "eyebrow": "SCHOOL",
+            "value": str(len(items)),
+            "label": "active assignments",
+            "detail": f"{due_soon} due in the next 7 days",
+            "page": "School",
+        }
+
+    if module == "Money":
+        money = data["money"]
+        savings = safe_float(money.get("savings"))
+        goal = max(safe_float(money.get("goal"), 1), 1)
+        pct = min(100, max(0, savings / goal * 100))
+        return {
+            "color": "green",
+            "eyebrow": "MONEY",
+            "value": f"{pct:.0f}%",
+            "label": "savings target",
+            "detail": f"${savings:,.0f} of ${goal:,.0f}",
+            "page": "Money",
+        }
+
+    if module == "Fitness":
+        workouts = data["fitness"].get("workouts", [])
+        cutoff = now_local().date() - timedelta(days=7)
+        recent = 0
+        for workout in workouts:
+            try:
+                if date.fromisoformat(workout.get("date", "")) >= cutoff:
+                    recent += 1
+            except Exception:
+                pass
+
+        return {
+            "color": "pink",
+            "eyebrow": "FITNESS",
+            "value": str(recent),
+            "label": "workouts this week",
+            "detail": f"{len(workouts)} total workouts logged",
+            "page": "Fitness",
+        }
+
+    if module == "Intel":
+        radar = data["intel"].get("radar", [])
+        captures = data["intel"].get("captures", [])
+        open_captures = [item for item in captures if not item.get("done")]
+        return {
+            "color": "cyan",
+            "eyebrow": "INTEL",
+            "value": str(len(radar)),
+            "label": "future radar items",
+            "detail": f"{len(open_captures)} open captures",
+            "page": "Intel",
+        }
+
+    return {
+        "color": "blue",
+        "eyebrow": "ASSISTANT",
+        "value": "AI",
+        "label": "context ready",
+        "detail": "Your personal NEXUS assistant",
+        "page": "Assistant",
     }
 
 
@@ -974,7 +1297,7 @@ with st.sidebar:
     st.caption("Cloud account • personal operating system")
 
     login_label = user_display_name() or user_email() or "Google account"
-    st.caption(f"Signed in as **{login_label}**")
+    st.caption(f"Signed in as {login_label}")
 
     for nav_page in PAGES:
         label = f"{PAGE_ICONS[nav_page]}  {nav_page}"
@@ -1113,88 +1436,129 @@ page = st.session_state.current_page
 if page == "Dashboard":
     name = data["profile"].get("name", "").strip()
     greeting = f"Welcome back, {name}." if name else "Your personal operating system."
+    focus = data.get("profile", {}).get("primary_goal", "Stay organized")
 
     page_header(
-        "Personal Operating System",
+        "NEXUS // COMMAND CENTER",
         system_name(),
-        f"{greeting} Focus: {data.get('profile', {}).get('primary_goal', 'Stay organized')}.",
+        f"{greeting} Current focus: {focus}.",
     )
 
-    school_items = active_school_items()
+    modules = dashboard_module_order()
     missions = mission_stack()
-    money = data["money"]
-    savings = safe_float(money.get("savings"))
-    goal = max(safe_float(money.get("goal"), 1), 1)
-    pct = min(100, max(0, savings / goal * 100))
 
-    workouts = data["fitness"].get("workouts", [])
-    cutoff = now_local().date() - timedelta(days=7)
-    last7 = 0
-    for w in workouts:
-        try:
-            if date.fromisoformat(w.get("date", "")) >= cutoff:
-                last7 += 1
-        except Exception:
-            pass
+    st.markdown(
+        '<div class="mc-section">COMMAND DECK</div>',
+        unsafe_allow_html=True,
+    )
 
-    cards = [
-        ("purple", "School", str(len(school_items)), "active assignments"),
-        ("green", "Savings", f"{pct:.0f}%", f"${savings:,.0f} of ${goal:,.0f}"),
-        ("pink", "Fitness", str(last7), "workouts in last 7 days"),
-        ("cyan", "Mission Stack", str(len(missions)), "active priorities"),
-    ]
-    card_grid(cards)
+    snapshots = [dashboard_snapshot(module) for module in modules]
 
-    st.markdown('<div class="mc-section">✦ NEXUS PULSE</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="mc-note">{local_brief()}</div>', unsafe_allow_html=True)
+    for start in range(0, len(snapshots), 3):
+        row = snapshots[start:start + 3]
+        cols = st.columns(len(row))
 
-    col1, col2 = st.columns([1.15, 0.85])
+        for idx, snap in enumerate(row):
+            with cols[idx]:
+                st.markdown(
+                    f"""
+                    <div class="nx-module-card {snap['color']}">
+                        <div class="nx-eye">{snap['eyebrow']}</div>
+                        <div class="nx-big">{snap['value']}</div>
+                        <div class="nx-label">{snap['label']}</div>
+                        <div class="nx-detail">{snap['detail']}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-    with col1:
-        st.markdown('<div class="mc-section">Top missions</div>', unsafe_allow_html=True)
+                if st.button(
+                    f"Open {snap['page']}",
+                    key=f"dash_open_{start}_{snap['page']}",
+                    use_container_width=True,
+                ):
+                    go_to(snap["page"])
+
+    st.markdown(
+        '<div class="mc-section">NEXUS PULSE</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f'<div class="mc-note">{local_brief()}</div>',
+        unsafe_allow_html=True,
+    )
+
+    left, right = st.columns([1.18, .82])
+
+    with left:
+        st.markdown(
+            '<div class="mc-section">MISSION STACK</div>',
+            unsafe_allow_html=True,
+        )
+
         if not missions:
-            st.info("Nothing urgent yet. Add assignments, tasks, or radar items.")
+            st.info("Nothing urgent is stacked right now.")
         else:
-            for item in missions[:5]:
+            for item in missions[:6]:
                 due_text = ""
                 if item.get("due"):
                     due_text = item["due"].strftime("%a %b %-d • %-I:%M %p")
+
+                meta = f"{item['type']} • {item['detail']}"
+                if due_text:
+                    meta += f" • {due_text}"
+
                 st.markdown(
                     f"""
                     <div class="mc-task">
                         <div class="mc-task-title">{item['title']}</div>
-                        <div class="mc-task-meta">{item['type']} • {item['detail']}
-                        {f' • {due_text}' if due_text else ''} • score {item['score']}</div>
+                        <div class="mc-task-meta">{meta}</div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
-    with col2:
-        st.markdown('<div class="mc-section">Future radar</div>', unsafe_allow_html=True)
-        radar = sorted(
-            data["intel"].get("radar", []),
-            key=lambda x: x.get("date", "9999"),
-        )
-        if not radar:
-            st.caption("Add future dates in Intel.")
+    with right:
+        if module_enabled("Intel"):
+            st.markdown(
+                '<div class="mc-section">FUTURE RADAR</div>',
+                unsafe_allow_html=True,
+            )
+
+            radar = sorted(
+                data["intel"].get("radar", []),
+                key=lambda x: x.get("date", "9999"),
+            )
+
+            if not radar:
+                st.caption("No future radar items yet.")
+            else:
+                for item in radar[:5]:
+                    try:
+                        target = date.fromisoformat(item["date"])
+                        days = (target - now_local().date()).days
+                        when = f"{days} days" if days >= 0 else f"{abs(days)} days ago"
+                    except Exception:
+                        when = item.get("date", "")
+
+                    st.markdown(
+                        f"""
+                        <div class="mc-radar">
+                            <div class="mc-task-title">{item.get('name', 'Event')}</div>
+                            <div class="mc-task-meta">{when}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
         else:
-            for item in radar[:4]:
-                try:
-                    target = date.fromisoformat(item["date"])
-                    days = (target - now_local().date()).days
-                    when = f"{days} days" if days >= 0 else f"{abs(days)} days ago"
-                except Exception:
-                    when = item.get("date", "")
-                st.markdown(
-                    f"""
-                    <div class="mc-radar">
-                        <strong>{item.get('name','Event')}</strong><br>
-                        <span style="color:#91a0ba">{when}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            st.markdown(
+                '<div class="mc-section">CURRENT FOCUS</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f'<div class="mc-note">{focus}</div>',
+                unsafe_allow_html=True,
+            )
 
 
 # ============================================================
@@ -1311,7 +1675,7 @@ elif page == "School":
             c1, c2 = st.columns([5, 1])
             with c1:
                 st.markdown(
-                    f"**{item.get('name')}**  \n"
+                    f"{item.get('name')}  \n"
                     f"{item.get('course')} • due {item.get('due_date')} • {item.get('priority')}"
                 )
             with c2:
@@ -1709,7 +2073,7 @@ elif page == "Assistant":
                     if missions:
                         top = missions[0]
                         answer = (
-                            f"Your next move is **{top['title']}** — {top['detail']}. "
+                            f"Your next move is {top['title']} — {top['detail']}. "
                             f"It currently has the highest mission score ({top['score']})."
                         )
                     else:
@@ -1718,12 +2082,12 @@ elif page == "Assistant":
                     savings = safe_float(data["money"].get("savings"))
                     goal = max(safe_float(data["money"].get("goal"), 1), 1)
                     answer = (
-                        f"You're at **${savings:,.0f} / ${goal:,.0f}** "
+                        f"You're at ${savings:,.0f} / ${goal:,.0f} "
                         f"({min(100, savings/goal*100):.1f}% of goal)."
                     )
                 elif "workout" in lower or "fitness" in lower:
                     answer = (
-                        f"You've logged **{len(data['fitness'].get('workouts', []))} total workouts** "
+                        f"You've logged {len(data['fitness'].get('workouts', []))} total workouts "
                         "in this session profile."
                     )
                 else:
@@ -1751,6 +2115,6 @@ elif page == "Assistant":
 
 st.divider()
 st.caption(
-    f"{system_name()} • NEXUS Personalized Cloud Build • Google login + private Neon persistence • "
+    f"{system_name()} • NEXUS Adaptive Command Center • Google login + private Neon persistence • "
     "no owner Canvas token, and no owner OpenAI key are included in this build."
 )
