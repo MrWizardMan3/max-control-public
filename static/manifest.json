@@ -1,0 +1,25 @@
+{
+  "name": "NEXUS \u2014 Personal OS",
+  "short_name": "NEXUS",
+  "description": "Your personal command center for school, money, fitness, goals, intel, and AI.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070a11",
+  "theme_color": "#070a11",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/app/static/nexus-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app/static/nexus-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
