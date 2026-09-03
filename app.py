@@ -21,59 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-
-# ============================================================
-# INSTALLABLE APP METADATA
-# ============================================================
-# NEXUS remains a Streamlit cloud app, but these tags give browsers
-# proper app branding for Home Screen / Dock / shortcut installs.
-st.html(
-    """
-    <script>
-    (() => {
-        const head = document.head;
-
-        function upsertLink(rel, href, extra = {}) {
-            let el = head.querySelector(`link[rel="${rel}"]`);
-            if (!el) {
-                el = document.createElement("link");
-                el.rel = rel;
-                head.appendChild(el);
-            }
-            el.href = href;
-            Object.entries(extra).forEach(([k, v]) => el.setAttribute(k, v));
-        }
-
-        function upsertMeta(name, content) {
-            let el = head.querySelector(`meta[name="${name}"]`);
-            if (!el) {
-                el = document.createElement("meta");
-                el.name = name;
-                head.appendChild(el);
-            }
-            el.content = content;
-        }
-
-        document.title = "NEXUS — Personal OS";
-
-        upsertLink("manifest", "/app/static/manifest.json");
-        upsertLink("apple-touch-icon", "/app/static/apple-touch-icon.png");
-        upsertLink("icon", "/app/static/nexus-64.png", {type: "image/png"});
-
-        upsertMeta("theme-color", "#070a11");
-        upsertMeta("application-name", "NEXUS");
-        upsertMeta("apple-mobile-web-app-capable", "yes");
-        upsertMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
-        upsertMeta("apple-mobile-web-app-title", "NEXUS");
-        upsertMeta("mobile-web-app-capable", "yes");
-    })();
-    </script>
-    """,
-    width="content",
-    unsafe_allow_javascript=True,
-)
-
-APP_VERSION = "PUBLIC V1.8 • INSTALLABLE APP SHELL"
+APP_VERSION = "PUBLIC V1.8.1 • STABLE APP SHELL"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
