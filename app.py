@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V2.0 • PERSONAL OS FOUNDATION"
+APP_VERSION = "PUBLIC V2.0.1 • MODULE MIGRATION FIX"
 DEFAULT_TZ = "America/Los_Angeles"
 SYSTEM_NAME_MAX_CHARS = 24
 
@@ -523,6 +523,21 @@ if "current_page" not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
 data = st.session_state.public_data
+
+# V2 module migration:
+# Existing accounts created before V2 can still have only the original five
+# modules saved in Neon. Add the new V2 modules once, then preserve any future
+# customization the user makes.
+profile = data.setdefault("profile", {})
+if not profile.get("v2_modules_migrated"):
+    saved_modules = profile.get("modules") or []
+    original_modules = {"School", "Money", "Fitness", "Intel", "Assistant"}
+
+    if set(saved_modules).issubset(original_modules):
+        profile["modules"] = list(ALL_MODULES)
+
+    profile["v2_modules_migrated"] = True
+    save_state()
 
 # Navigation depends on this signed-in user's saved module choices.
 PAGES = ["Dashboard"] + [
