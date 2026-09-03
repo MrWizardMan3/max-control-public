@@ -21,17 +21,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.1 • CLOUD ACCOUNTS"
+APP_VERSION = "PUBLIC V1.2 • PERSONALIZED NEXUS"
 DEFAULT_TZ = "America/Los_Angeles"
 
-PAGES = [
-    "Dashboard",
-    "School",
-    "Money",
-    "Fitness",
-    "Intel",
-    "Assistant",
-]
+PAGES = ["Dashboard"] + enabled_modules()
 
 PAGE_ICONS = {
     "Dashboard": "⚡",
@@ -54,6 +47,8 @@ def default_state():
             "system_name": "NEXUS",
             "timezone": DEFAULT_TZ,
             "onboarded": False,
+            "modules": ["School", "Money", "Fitness", "Intel", "Assistant"],
+            "primary_goal": "Stay organized",
         },
         "tasks": [],
         "manual_assignments": [],
@@ -356,6 +351,15 @@ def system_name():
 
 def owner_name():
     return (data.get("profile", {}).get("name") or "").strip()
+
+
+def enabled_modules():
+    modules = data.get("profile", {}).get("modules") or []
+    return [m for m in modules if m in ["School", "Money", "Fitness", "Intel", "Assistant"]]
+
+
+def module_enabled(name):
+    return name in enabled_modules()
 
 
 # ============================================================
@@ -872,11 +876,11 @@ if not st.session_state.get("nexus_onboarded", False):
     st.markdown(
         """
         <div class="mc-hero">
-            <div class="mc-kicker">WELCOME</div>
-            <div class="mc-title">Build your system.</div>
+            <div class="mc-kicker">WELCOME TO NEXUS</div>
+            <div class="mc-title">Build your operating system.</div>
             <div class="mc-subtitle">
-                Create your personal operating system once, then NEXUS will
-                securely load it whenever you sign in on another device.
+                Choose what matters to you. NEXUS will shape the dashboard around
+                your priorities and you can change everything later.
             </div>
         </div>
         """,
@@ -895,6 +899,32 @@ if not st.session_state.get("nexus_onboarded", False):
             placeholder="NEXUS",
             help="Examples: NEXUS, ORBIT, CORE, APEX",
         )
+
+        st.markdown("### What do you want NEXUS to manage?")
+        default_modules = data["profile"].get(
+            "modules",
+            ["School", "Money", "Fitness", "Intel", "Assistant"],
+        )
+        selected_modules = st.multiselect(
+            "Choose your modules",
+            ["School", "Money", "Fitness", "Intel", "Assistant"],
+            default=default_modules,
+            help="Your dashboard and navigation will adapt to these choices.",
+        )
+
+        primary_goal = st.selectbox(
+            "What's your main focus right now?",
+            [
+                "Stay organized",
+                "Do better in school",
+                "Save more money",
+                "Get in better shape",
+                "Hit long-term goals",
+                "Use AI to stay ahead",
+            ],
+            index=0,
+        )
+
         onboard_tz = st.text_input(
             "Timezone",
             value=data["profile"].get("timezone", DEFAULT_TZ),
@@ -902,18 +932,23 @@ if not st.session_state.get("nexus_onboarded", False):
         )
 
         submitted = st.form_submit_button(
-            "ENTER MY SYSTEM",
+            "BUILD MY NEXUS",
             use_container_width=True,
         )
 
         if submitted:
-            data["profile"]["name"] = onboard_name.strip() or user_display_name()
-            data["profile"]["system_name"] = onboard_system.strip() or "NEXUS"
-            data["profile"]["timezone"] = onboard_tz.strip() or DEFAULT_TZ
-            data["profile"]["onboarded"] = True
-            save_state()
-            st.session_state.nexus_onboarded = True
-            st.rerun()
+            if not selected_modules:
+                st.error("Choose at least one module.")
+            else:
+                data["profile"]["name"] = onboard_name.strip() or user_display_name()
+                data["profile"]["system_name"] = onboard_system.strip() or "NEXUS"
+                data["profile"]["timezone"] = onboard_tz.strip() or DEFAULT_TZ
+                data["profile"]["modules"] = selected_modules
+                data["profile"]["primary_goal"] = primary_goal
+                data["profile"]["onboarded"] = True
+                save_state()
+                st.session_state.nexus_onboarded = True
+                st.rerun()
 
     st.stop()
 
@@ -973,14 +1008,44 @@ with st.sidebar:
             help="Example: America/Los_Angeles",
             key="profile_timezone",
         )
+        profile_modules = st.multiselect(
+            "Active modules",
+            ["School", "Money", "Fitness", "Intel", "Assistant"],
+            default=data["profile"].get(
+                "modules",
+                ["School", "Money", "Fitness", "Intel", "Assistant"],
+            ),
+            key="profile_modules",
+        )
+        goal_options = [
+            "Stay organized",
+            "Do better in school",
+            "Save more money",
+            "Get in better shape",
+            "Hit long-term goals",
+            "Use AI to stay ahead",
+        ]
+        current_goal = data["profile"].get("primary_goal", "Stay organized")
+        profile_goal = st.selectbox(
+            "Primary focus",
+            goal_options,
+            index=goal_options.index(current_goal) if current_goal in goal_options else 0,
+            key="profile_primary_goal",
+        )
 
         if st.button("Save profile", use_container_width=True, key="save_profile"):
-            data["profile"]["name"] = profile_name.strip()
-            data["profile"]["system_name"] = profile_system.strip() or "NEXUS"
-            data["profile"]["timezone"] = profile_timezone.strip() or DEFAULT_TZ
-            data["profile"]["onboarded"] = True
-            save_state()
-            st.success("Saved to NEXUS cloud.")
+            if not profile_modules:
+                st.warning("Keep at least one active module.")
+            else:
+                data["profile"]["name"] = profile_name.strip()
+                data["profile"]["system_name"] = profile_system.strip() or "NEXUS"
+                data["profile"]["timezone"] = profile_timezone.strip() or DEFAULT_TZ
+                data["profile"]["modules"] = profile_modules
+                data["profile"]["primary_goal"] = profile_goal
+                data["profile"]["onboarded"] = True
+                save_state()
+                st.success("Saved to NEXUS cloud.")
+                st.rerun()
 
         if st.button("Log out", use_container_width=True, key="logout_nexus"):
             # Clear user-specific in-memory state before removing auth cookie.
@@ -1043,7 +1108,7 @@ if page == "Dashboard":
     page_header(
         "Personal Operating System",
         system_name(),
-        f"{greeting} School, money, fitness, intel, and AI in one personal command center.",
+        f"{greeting} Focus: {data.get('profile', {}).get('primary_goal', 'Stay organized')}.",
     )
 
     school_items = active_school_items()
@@ -1677,6 +1742,6 @@ elif page == "Assistant":
 
 st.divider()
 st.caption(
-    f"{system_name()} • NEXUS Cloud Build • Google login + private Neon persistence • "
+    f"{system_name()} • NEXUS Personalized Cloud Build • Google login + private Neon persistence • "
     "no owner Canvas token, and no owner OpenAI key are included in this build."
 )
