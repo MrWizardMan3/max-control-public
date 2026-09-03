@@ -21,8 +21,35 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-APP_VERSION = "PUBLIC V1.6 • BALANCED COMMAND CENTER"
+APP_VERSION = "PUBLIC V1.7 • NAVIGATION + PROFILE POLISH"
 DEFAULT_TZ = "America/Los_Angeles"
+SYSTEM_NAME_MAX_CHARS = 24
+
+TIMEZONE_OPTIONS = [
+    "America/Los_Angeles",
+    "America/Phoenix",
+    "America/Denver",
+    "America/Chicago",
+    "America/New_York",
+    "America/Anchorage",
+    "Pacific/Honolulu",
+    "America/Toronto",
+    "America/Vancouver",
+    "America/Mexico_City",
+    "America/Sao_Paulo",
+    "Europe/London",
+    "Europe/Paris",
+    "Europe/Berlin",
+    "Europe/Rome",
+    "Asia/Dubai",
+    "Asia/Kolkata",
+    "Asia/Singapore",
+    "Asia/Tokyo",
+    "Asia/Seoul",
+    "Australia/Sydney",
+    "Pacific/Auckland",
+    "UTC",
+]
 
 
 PAGE_ICONS = {
@@ -353,9 +380,31 @@ def safe_float(value, default=0.0):
         return default
 
 
+def clean_system_name(value):
+    cleaned = (value or "").strip()
+    if not cleaned:
+        return "NEXUS"
+    return cleaned[:SYSTEM_NAME_MAX_CHARS]
+
+
+def timezone_choices(current=None):
+    current = (current or DEFAULT_TZ).strip() or DEFAULT_TZ
+    choices = list(TIMEZONE_OPTIONS)
+    if current not in choices:
+        choices.insert(0, current)
+    return choices
+
+
+def timezone_index(choices, current=None):
+    current = (current or DEFAULT_TZ).strip() or DEFAULT_TZ
+    try:
+        return choices.index(current)
+    except ValueError:
+        return 0
+
+
 def system_name():
-    value = (data.get("profile", {}).get("system_name") or "NEXUS").strip()
-    return value or "NEXUS"
+    return clean_system_name(data.get("profile", {}).get("system_name"))
 
 
 def owner_name():
@@ -1614,9 +1663,10 @@ if not st.session_state.get("nexus_onboarded", False):
         )
         onboard_system = st.text_input(
             "What should your system be called?",
-            value=data["profile"].get("system_name", "NEXUS"),
+            value=clean_system_name(data["profile"].get("system_name", "NEXUS")),
             placeholder="NEXUS",
-            help="Examples: NEXUS, ORBIT, CORE, APEX",
+            help=f"Examples: NEXUS, ORBIT, CORE, APEX • {SYSTEM_NAME_MAX_CHARS} character max",
+            max_chars=SYSTEM_NAME_MAX_CHARS,
         )
 
         st.markdown("### What do you want NEXUS to manage?")
@@ -1644,10 +1694,17 @@ if not st.session_state.get("nexus_onboarded", False):
             index=0,
         )
 
-        onboard_tz = st.text_input(
+        onboard_tz_choices = timezone_choices(
+            data["profile"].get("timezone", DEFAULT_TZ)
+        )
+        onboard_tz = st.selectbox(
             "Timezone",
-            value=data["profile"].get("timezone", DEFAULT_TZ),
-            help="Example: America/Los_Angeles",
+            onboard_tz_choices,
+            index=timezone_index(
+                onboard_tz_choices,
+                data["profile"].get("timezone", DEFAULT_TZ),
+            ),
+            help="Choose the timezone NEXUS should use for dates and deadlines.",
         )
 
         submitted = st.form_submit_button(
@@ -1660,8 +1717,8 @@ if not st.session_state.get("nexus_onboarded", False):
                 st.error("Choose at least one module.")
             else:
                 data["profile"]["name"] = onboard_name.strip() or user_display_name()
-                data["profile"]["system_name"] = onboard_system.strip() or "NEXUS"
-                data["profile"]["timezone"] = onboard_tz.strip() or DEFAULT_TZ
+                data["profile"]["system_name"] = clean_system_name(onboard_system)
+                data["profile"]["timezone"] = onboard_tz or DEFAULT_TZ
                 data["profile"]["modules"] = selected_modules
                 data["profile"]["primary_goal"] = primary_goal
                 data["profile"]["onboarded"] = True
@@ -1716,15 +1773,23 @@ with st.sidebar:
         )
         profile_system = st.text_input(
             "Name your system",
-            value=data["profile"].get("system_name", "NEXUS"),
+            value=clean_system_name(data["profile"].get("system_name", "NEXUS")),
             placeholder="NEXUS",
-            help="Examples: NEXUS, ORBIT, CORE, APEX",
+            help=f"Examples: NEXUS, ORBIT, CORE, APEX • {SYSTEM_NAME_MAX_CHARS} character max",
+            max_chars=SYSTEM_NAME_MAX_CHARS,
             key="profile_system_name",
         )
-        profile_timezone = st.text_input(
+        profile_tz_choices = timezone_choices(
+            data["profile"].get("timezone", DEFAULT_TZ)
+        )
+        profile_timezone = st.selectbox(
             "Timezone",
-            value=data["profile"].get("timezone", DEFAULT_TZ),
-            help="Example: America/Los_Angeles",
+            profile_tz_choices,
+            index=timezone_index(
+                profile_tz_choices,
+                data["profile"].get("timezone", DEFAULT_TZ),
+            ),
+            help="Choose the timezone NEXUS should use for dates and deadlines.",
             key="profile_timezone",
         )
         profile_modules = st.multiselect(
@@ -1757,8 +1822,8 @@ with st.sidebar:
                 st.warning("Keep at least one active module.")
             else:
                 data["profile"]["name"] = profile_name.strip()
-                data["profile"]["system_name"] = profile_system.strip() or "NEXUS"
-                data["profile"]["timezone"] = profile_timezone.strip() or DEFAULT_TZ
+                data["profile"]["system_name"] = clean_system_name(profile_system)
+                data["profile"]["timezone"] = profile_timezone or DEFAULT_TZ
                 data["profile"]["modules"] = profile_modules
                 data["profile"]["primary_goal"] = profile_goal
                 data["profile"]["onboarded"] = True
@@ -1819,6 +1884,17 @@ with st.sidebar:
 # ============================================================
 
 page = st.session_state.current_page
+
+if page != "Dashboard":
+    back_col, _ = st.columns([1.15, 5])
+    with back_col:
+        if st.button(
+            "← Back to Dashboard",
+            key=f"back_to_dashboard_{page}",
+            use_container_width=True,
+        ):
+            go_to("Dashboard")
+
 
 def quick_access_pages():
     ordered = dashboard_module_order()
